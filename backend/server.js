@@ -1,6 +1,11 @@
 /**
  * 基金收益管理系统 - 后端服务
  * 支持账户分组、基金搜索、实时收益计算
+ * 遵循基金交易规则：
+ * - 基金按份额持有
+ * - 当日收益 = 持有份额 × (当日净值 - 昨日净值)
+ * - 累计收益 = 持有份额 × (当前净值 - 买入净值)
+ * - 当前市值 = 持有份额 × 当前净值
  */
 
 const express = require('express');
@@ -83,6 +88,9 @@ app.use(express.static(path.join(__dirname, '../frontend')));
 
 /**
  * 获取单个基金的实时估值
+ * 返回数据包含：
+ * - netWorth: 昨日净值（用于计算当日收益）
+ * - estimatedWorth: 估算净值（今日收盘价估算）
  */
 async function getFundPrice(code) {
   // 检查缓存
@@ -102,11 +110,11 @@ async function getFundPrice(code) {
       const result = {
         code: data.fundcode,
         name: data.name,
-        netWorth: parseFloat(data.dwjz) || 0,        // 单位净值（昨日）
-        totalWorth: parseFloat(data.dwjz) || 0,      // 累计净值
-        estimatedWorth: parseFloat(data.gsz) || 0,   // 估算净值（今日）
+        netWorth: parseFloat(data.dwjz) || 0,        // 单位净值（昨日收盘净值）
+        totalWorth: parseFloat(data.ljjz) || 0,      // 累计净值
+        estimatedWorth: parseFloat(data.gsz) || 0,   // 估算净值（今日实时估算）
         estimatedGrowth: parseFloat(data.gsz === '' ? 0 : data.gszzl) || 0, // 估算增长率
-        updateTime: data.gztime || ''
+        updateTime: data.gztime || ''                // 更新时间
       };
       
       // 更新缓存
@@ -333,6 +341,84 @@ app.delete('/api/accounts/:id', (req, res) => {
 
 // ========== 持仓管理 API ==========
 
+/**
+ * 计算基金确认日期
+ * - 15:00前买入：当日起算（遇节假日顺延）
+ * - 15:00后买入：次日起算（遇节假日顺延）
+ */
+function calculateConfirmDate(purchaseDate, before315) {
+  const date = new Date(purchaseDate);
+  // 如果是15:00后买入，确认日期+1天
+  if (!before315) {
+    date.setDate(date.getDate() + 1);
+  }
+  // 跳过周末
+  while (date.getDay() === 0 || date.getDay() === 6) {
+    date.setDate(date.getDate() + 1);
+  }
+  return date.toISOString().split('T')[0];
+}
+
+/**
+ * 检查持仓是否已确认
+ */
+function isHoldingConfirmed(holding) {
+  const today = new Date().toISOString().split('T')[0];
+  const confirmDate = calculateConfirmDate(holding.purchase_date, holding.before_315);
+  return confirmDate <= today;
+}
+
+/**
+ * 获取指定日期的基金净值
+ * 如果是历史日期，需要获取历史净值数据
+ */
+async function getHistoricalNetWorth(code, date) {
+  // 优先使用缓存中的最新净值
+  const cached = fundPriceCache.get(code);
+  if (cached && cached.data.netWorth) {
+    // 如果查询的是今天或昨天，返回缓存数据
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    const todayStr = today.toISOString().split('T')[0];
+    const yesterdayStr = yesterday.toISOString().split('T')[0];
+    
+    if (date === todayStr || date === yesterdayStr) {
+      return {
+        netWorth: cached.data.netWorth,
+        estimatedWorth: cached.data.estimatedWorth
+      };
+    }
+  }
+  
+  // 尝试从天天基金获取历史净值
+  try {
+    const startDate = date.replace(/-/g, '');
+    const endDate = date.replace(/-/g, '');
+    const url = `https://api.fund.eastmoney.com/f10/lsjz?fundCode=${code}&pageIndex=1&pageSize=1&startDate=${date}&endDate=${date}`;
+    
+    const response = await fetch(url, {
+      headers: {
+        'Referer': 'https://fund.eastmoney.com/'
+      }
+    });
+    const data = await response.json();
+    
+    if (data.Data && data.Data.LSJZList && data.Data.LSJZList.length > 0) {
+      const record = data.Data.LSJZList[0];
+      return {
+        netWorth: parseFloat(record.DWJZ) || 0,
+        totalWorth: parseFloat(record.LJJZ) || 0
+      };
+    }
+  } catch (error) {
+    console.error(`获取历史净值失败 ${code} ${date}:`, error.message);
+  }
+  
+  return null;
+}
+
 app.get('/api/holdings/:accountId', (req, res) => {
   try {
     const { accountId } = req.params;
@@ -353,11 +439,18 @@ app.get('/api/holdings', (req, res) => {
   }
 });
 
-app.post('/api/holdings', (req, res) => {
+/**
+ * 添加持仓
+ * 数据结构：
+ * - buyAmount: 买入金额（元）
+ * - buyNetWorth: 买入时的净值
+ * - shares: 持有份额（系统自动计算：buyAmount / buyNetWorth）
+ */
+app.post('/api/holdings', async (req, res) => {
   try {
-    const { account_id, fund_code, fund_name, cost, profit, purchase_date, before_315 } = req.body;
+    const { account_id, fund_code, fund_name, buy_amount, buy_net_worth, profit, purchase_date, before_315 } = req.body;
     
-    if (!account_id || !fund_name || cost === undefined) {
+    if (!account_id || !fund_name) {
       return res.status(400).json({ success: false, message: '缺少必要参数' });
     }
     
@@ -368,13 +461,25 @@ app.post('/api/holdings', (req, res) => {
     }
     
     const holdings = readHoldings();
+    
+    // 计算持有份额
+    const buyAmount = parseFloat(buy_amount) || 0;
+    let buyNetWorth = parseFloat(buy_net_worth) || 1;
+    let shares = 0;
+    
+    if (buyNetWorth > 0 && buyAmount > 0) {
+      shares = buyAmount / buyNetWorth;
+    }
+    
     const newHolding = {
       id: 'H' + Date.now(),
       account_id,
       fund_code: fund_code || '',
       fund_name,
-      cost: parseFloat(cost),
-      profit: profit !== undefined ? parseFloat(profit) : 0,
+      buy_amount: buyAmount,      // 买入金额
+      buy_net_worth: buyNetWorth, // 买入净值
+      shares: shares,             // 持有份额
+      profit: profit !== undefined ? parseFloat(profit) : 0, // 历史累计收益（用户手动输入的调整值）
       purchase_date: purchase_date || new Date().toISOString().split('T')[0],
       before_315: before_315 !== undefined ? Boolean(before_315) : true,
       created_at: new Date().toISOString(),
@@ -390,20 +495,34 @@ app.post('/api/holdings', (req, res) => {
   }
 });
 
+/**
+ * 更新持仓
+ */
 app.put('/api/holdings/:id', (req, res) => {
   try {
     const { id } = req.params;
-    const { fund_code, fund_name, cost, profit, purchase_date, before_315 } = req.body;
+    const { fund_code, fund_name, buy_amount, buy_net_worth, profit, purchase_date, before_315 } = req.body;
     
     const holdings = readHoldings();
     const index = holdings.findIndex(h => h.id === id);
     
     if (index >= 0) {
+      // 重新计算份额
+      const buyAmount = buy_amount !== undefined ? parseFloat(buy_amount) : holdings[index].buy_amount;
+      const buyNetWorth = buy_net_worth !== undefined ? parseFloat(buy_net_worth) : holdings[index].buy_net_worth || 1;
+      let shares = 0;
+      
+      if (buyNetWorth > 0 && buyAmount > 0) {
+        shares = buyAmount / buyNetWorth;
+      }
+      
       holdings[index] = {
         ...holdings[index],
         fund_code: fund_code !== undefined ? fund_code : holdings[index].fund_code,
         fund_name: fund_name || holdings[index].fund_name,
-        cost: cost !== undefined ? parseFloat(cost) : holdings[index].cost,
+        buy_amount: buyAmount,
+        buy_net_worth: buyNetWorth,
+        shares: shares,
         profit: profit !== undefined ? parseFloat(profit) : holdings[index].profit,
         purchase_date: purchase_date || holdings[index].purchase_date,
         before_315: before_315 !== undefined ? Boolean(before_315) : holdings[index].before_315,
@@ -433,21 +552,67 @@ app.delete('/api/holdings/:id', (req, res) => {
 
 // ========== 概览 API ==========
 
-function calculateConfirmDate(purchaseDate, before315) {
-  const date = new Date(purchaseDate);
-  if (!before315) {
-    date.setDate(date.getDate() + 1);
+/**
+ * 计算基金收益（遵循基金交易规则）
+ * 
+ * 核心公式：
+ * - 当前市值 = 持有份额 × 当前净值
+ * - 累计收益 = 持有份额 × (当前净值 - 买入净值) + 历史调整收益
+ * - 当日收益 = 持有份额 × (估算净值 - 昨日净值)
+ */
+function calculateFundProfit(holding, price) {
+  const shares = holding.shares || 0;
+  const buyNetWorth = holding.buy_net_worth || 1;
+  
+  // 如果没有实时价格，返回默认值
+  if (!price) {
+    return {
+      currentValue: shares * buyNetWorth, // 估算当前市值
+      totalProfit: holding.profit || 0,
+      todayProfit: 0,
+      profitRate: 0,
+      todayProfitRate: 0
+    };
   }
-  while (date.getDay() === 0 || date.getDay() === 6) {
-    date.setDate(date.getDate() + 1);
-  }
-  return date.toISOString().split('T')[0];
-}
-
-function isHoldingConfirmed(holding) {
-  const today = new Date().toISOString().split('T')[0];
-  const confirmDate = calculateConfirmDate(holding.purchase_date, holding.before_315);
-  return confirmDate <= today;
+  
+  // 当前净值（使用估算净值，如果没有则用昨日净值）
+  const currentNetWorth = price.estimatedWorth || price.netWorth;
+  const yesterdayNetWorth = price.netWorth;
+  
+  // ========== 收益计算 ==========
+  
+  // 1. 当前市值 = 持有份额 × 当前净值
+  const currentValue = shares * currentNetWorth;
+  
+  // 2. 累计收益 = 持有份额 × (当前净值 - 买入净值) + 用户调整的历史收益
+  // 注意：holding.profit 是用户手动输入的调整值（可能是为了修正分红等）
+  const investment = shares * buyNetWorth; // 总投入
+  const unrealizedProfit = shares * (currentNetWorth - buyNetWorth); // 浮动盈亏
+  const totalProfit = unrealizedProfit + (holding.profit || 0);
+  
+  // 3. 累计收益率
+  const profitRate = investment > 0 ? (totalProfit / investment) * 100 : 0;
+  
+  // 4. 当日收益 = 持有份额 × (估算净值 - 昨日净值)
+  // 只有持仓已确认才计算当日收益
+  const todayProfit = isHoldingConfirmed(holding) 
+    ? shares * (price.estimatedWorth - yesterdayNetWorth)
+    : 0;
+  
+  // 5. 当日收益率
+  const todayProfitRate = yesterdayNetWorth > 0 
+    ? ((price.estimatedWorth - yesterdayNetWorth) / yesterdayNetWorth) * 100 
+    : 0;
+  
+  return {
+    currentValue,
+    totalProfit,
+    todayProfit,
+    profitRate,
+    todayProfitRate,
+    currentNetWorth,
+    yesterdayNetWorth
+  };
 }
 
 // 获取概览 - 包含实时当日收益
@@ -460,73 +625,87 @@ app.get('/api/overview', async (req, res) => {
     const allCodes = [...new Set(holdings.map(h => h.fund_code).filter(c => c))];
     const prices = await getFundPrices(allCodes);
     
-    let totalCost = 0;
-    let totalProfit = 0;
-    let totalTodayProfit = 0;
+    let totalInvestment = 0;   // 总投入金额
+    let totalCurrentValue = 0; // 总当前市值
+    let totalProfit = 0;       // 总累计收益
+    let totalTodayProfit = 0;  // 总当日收益
     
     // 按账户分组
     const accountsWithHoldings = accounts.map(account => {
       const accountHoldings = holdings.filter(h => h.account_id === account.id);
       
+      let accountInvestment = 0;
+      let accountCurrentValue = 0;
+      let accountTotalProfit = 0;
       let accountTodayProfit = 0;
       
-      // 计算每个持仓的当日收益
-      const holdingsWithToday = accountHoldings.map(h => {
+      // 计算每个持仓的收益
+      const holdingsWithProfit = accountHoldings.map(h => {
         const price = prices[h.fund_code];
-        let todayProfit = 0;
-        let currentValue = h.cost + h.profit;
+        const profitData = calculateFundProfit(h, price);
         
-        if (price && isHoldingConfirmed(h)) {
-          // 当日收益 = 持有金额 * 估算增长率 / 100
-          todayProfit = h.cost * price.estimatedGrowth / 100;
-          currentValue = h.cost * (1 + price.estimatedGrowth / 100);
-        }
-        
-        accountTodayProfit += todayProfit;
+        // 累加到账户
+        const investment = (h.shares || 0) * (h.buy_net_worth || 1);
+        accountInvestment += investment;
+        accountCurrentValue += profitData.currentValue;
+        accountTotalProfit += profitData.totalProfit;
+        accountTodayProfit += profitData.todayProfit;
         
         return {
           ...h,
-          todayProfit: todayProfit,
-          currentValue: currentValue,
-          price: price
+          currentValue: profitData.currentValue,
+          totalProfit: profitData.totalProfit,
+          todayProfit: profitData.todayProfit,
+          profitRate: profitData.profitRate,
+          todayProfitRate: profitData.todayProfitRate,
+          currentNetWorth: profitData.currentNetWorth,
+          yesterdayNetWorth: profitData.yesterdayNetWorth,
+          price: price,
+          isConfirmed: isHoldingConfirmed(h)
         };
       });
       
-      const accountCost = accountHoldings.reduce((sum, h) => sum + h.cost, 0);
-      const accountProfit = accountHoldings.reduce((sum, h) => sum + h.profit, 0);
-      const accountValue = accountCost + accountProfit;
-      const accountProfitRate = accountCost ? (accountProfit / accountCost) * 100 : 0;
+      // 账户汇总
+      const accountProfitRate = accountInvestment > 0 
+        ? (accountTotalProfit / accountInvestment) * 100 
+        : 0;
+      const accountTodayProfitRate = holdingsWithProfit.length > 0 
+        ? (accountTodayProfit / accountInvestment) * 100 
+        : 0;
       
-      totalCost += accountCost;
-      totalProfit += accountProfit;
+      // 累加到总计
+      totalInvestment += accountInvestment;
+      totalCurrentValue += accountCurrentValue;
+      totalProfit += accountTotalProfit;
       totalTodayProfit += accountTodayProfit;
       
       return {
         ...account,
-        holdings: holdingsWithToday,
-        totalCost: accountCost,
-        totalProfit: accountProfit,
-        totalValue: accountValue,
+        holdings: holdingsWithProfit,
+        totalInvestment: accountInvestment,
+        totalCurrentValue: accountCurrentValue,
+        totalProfit: accountTotalProfit,
         profitRate: accountProfitRate,
         todayProfit: accountTodayProfit,
-        todayProfitRate: accountCost ? (accountTodayProfit / accountCost) * 100 : 0
+        todayProfitRate: accountTodayProfitRate,
+        holdingsCount: accountHoldings.length
       };
     });
     
-    const totalValue = totalCost + totalProfit;
-    const totalProfitRate = totalCost ? (totalProfit / totalCost) * 100 : 0;
-    const todayProfitRate = totalCost ? (totalTodayProfit / totalCost) * 100 : 0;
+    // 总计
+    const totalProfitRate = totalInvestment > 0 ? (totalProfit / totalInvestment) * 100 : 0;
+    const totalTodayProfitRate = totalInvestment > 0 ? (totalTodayProfit / totalInvestment) * 100 : 0;
     
     res.json({
       success: true,
       data: {
         summary: {
-          totalCost,
-          totalValue,
-          totalProfit,
-          totalProfitRate,
-          todayProfit: totalTodayProfit,
-          todayProfitRate,
+          totalInvestment,       // 总投入
+          totalCurrentValue,     // 总当前市值
+          totalProfit,          // 总累计收益
+          totalProfitRate,      // 累计收益率
+          todayProfit: totalTodayProfit,    // 总当日收益
+          todayProfitRate: totalTodayProfitRate, // 当日收益率
           accountsCount: accounts.length,
           holdingsCount: holdings.length,
           updateTime: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })

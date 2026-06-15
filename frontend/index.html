@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>基金收益 - 账户分组管理</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      min-height: 100vh;
+      color: #fff;
+    }
+
+    .app-container { display: flex; min-height: 100vh; }
+
+    /* 左侧边栏 */
+    .sidebar {
+      width: 280px;
+      background: rgba(0, 0, 0, 0.2);
+      border-right: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      position: fixed;
+      left: 0; top: 0;
+    }
+
+    .sidebar-header { padding: 15px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
+    .sidebar-title { font-size: 15px; font-weight: 600; margin-bottom: 12px; }
+
+    .add-account-btn {
+      width: 100%; padding: 10px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border: none; border-radius: 8px;
+      color: white; font-size: 13px; cursor: pointer;
+    }
+
+    .account-list { flex: 1; overflow-y: auto; padding: 10px; }
+
+    .account-item {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: all 0.3s;
+      border: 2px solid transparent;
+    }
+
+    .account-item:hover { background: rgba(255, 255, 255, 0.08); }
+    .account-item.active { border-color: #667eea; background: rgba(102, 126, 234, 0.15); }
+
+    .account-header { display: flex; justify-content: space-between; margin-bottom: 4px; }
+    .account-name { font-size: 13px; font-weight: 500; }
+    .account-today { font-size: 12px; font-weight: bold; color: #ffd700; }
+    .account-today.negative { color: #00ff88; }
+    .account-stats { font-size: 10px; opacity: 0.6; }
+
+    /* 主内容区 */
+    .main-content { flex: 1; margin-left: 280px; padding: 25px; }
+
+    /* 概览卡片 */
+    .overview-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 16px;
+      padding: 25px;
+      margin-bottom: 20px;
+      box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+    }
+
+    .overview-header { display: flex; justify-content: space-between; margin-bottom: 20px; }
+    .overview-title { font-size: 15px; opacity: 0.9; }
+    .overview-time { font-size: 11px; opacity: 0.7; }
+
+    /* 收益区域 */
+    .profit-section {
+      text-align: center;
+      padding: 20px 0;
+      border-top: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .profit-label { font-size: 14px; color: rgba(255,255,255,0.8); margin-bottom: 8px; }
+    .profit-amount { font-size: 40px; font-weight: bold; color: #ffd700; }
+    .profit-amount.negative { color: #00ff88; }
+    .profit-rate { font-size: 15px; margin-top: 5px; }
+
+    /* 当日收益 */
+    .today-section {
+      text-align: center;
+      padding: 15px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      margin-bottom: 15px;
+    }
+    .today-label { font-size: 12px; color: rgba(255,255,255,0.7); margin-bottom: 5px; }
+    .today-amount { font-size: 28px; font-weight: bold; color: #ffd700; }
+    .today-amount.negative { color: #00ff88; }
+    .today-rate { font-size: 13px; opacity: 0.8; }
+
+    .stats-row { display: flex; justify-content: space-around; margin-top: 20px; }
+    .stat-item { text-align: center; }
+    .stat-value { font-size: 16px; font-weight: 600; }
+    .stat-label { font-size: 11px; opacity: 0.7; }
+
+    /* 基金列表 */
+    .fund-section { margin-top: 20px; }
+    .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+    .section-title { font-size: 15px; font-weight: 600; }
+
+    .add-fund-btn {
+      padding: 8px 14px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border: none; border-radius: 8px;
+      color: white; font-size: 12px; cursor: pointer;
+    }
+
+    .fund-card {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .fund-info { flex: 1; }
+    .fund-name { font-size: 13px; font-weight: 500; margin-bottom: 4px; }
+    .fund-meta { font-size: 10px; opacity: 0.5; display: flex; gap: 10px; flex-wrap: wrap; }
+    .fund-details { font-size: 11px; opacity: 0.6; }
+
+    .fund-profit { text-align: right; margin-right: 10px; }
+    .fund-profit-amount { font-size: 15px; font-weight: bold; color: #ffd700; }
+    .fund-profit-amount.negative { color: #00ff88; }
+    .fund-profit-rate { font-size: 11px; opacity: 0.7; }
+
+    .fund-today { text-align: right; margin-right: 10px; min-width: 80px; }
+    .fund-today-amount { font-size: 14px; font-weight: bold; color: #ffd700; }
+    .fund-today-amount.negative { color: #00ff88; }
+    .fund-today-label { font-size: 10px; opacity: 0.6; }
+
+    .fund-actions { display: flex; gap: 6px; }
+    .fund-action-btn {
+      padding: 5px 8px;
+      border-radius: 6px;
+      border: none;
+      font-size: 11px;
+      cursor: pointer;
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+    }
+    .fund-action-btn.delete { background: rgba(255, 71, 87, 0.2); color: #ff4757; }
+
+    /* 空状态 */
+    .empty-state { text-align: center; padding: 50px; opacity: 0.7; }
+    .empty-icon { font-size: 48px; margin-bottom: 15px; }
+    .empty-text { font-size: 14px; margin-bottom: 8px; }
+    .empty-hint { font-size: 12px; opacity: 0.5; }
+
+    /* 模态框 */
+    .modal-overlay {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      display: none; justify-content: center; align-items: center;
+      z-index: 1000; backdrop-filter: blur(5px);
+    }
+    .modal-overlay.active { display: flex; }
+
+    .modal {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      border-radius: 16px; padding: 25px;
+      width: 90%; max-width: 420px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .modal-title { font-size: 17px; font-weight: 600; margin-bottom: 20px; text-align: center; }
+
+    .form-group { margin-bottom: 14px; }
+    .form-label { display: block; font-size: 12px; margin-bottom: 6px; opacity: 0.8; }
+    .form-input, .form-select {
+      width: 100%; padding: 11px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: rgba(255, 255, 255, 0.05);
+      color: white; font-size: 13px;
+    }
+    .form-input:focus, .form-select:focus { outline: none; border-color: #667eea; }
+
+    /* 搜索框 */
+    .search-container { position: relative; }
+    .search-results {
+      position: absolute;
+      top: 100%;
+      left: 0; right: 0;
+      background: #1a1a2e;
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 8px;
+      max-height: 200px;
+      overflow-y: auto;
+      z-index: 10;
+      display: none;
+    }
+    .search-results.active { display: block; }
+    .search-item {
+      padding: 10px 12px;
+      cursor: pointer;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      font-size: 12px;
+    }
+    .search-item:hover { background: rgba(102, 126, 234, 0.2); }
+    .search-item-code { opacity: 0.5; margin-left: 8px; }
+    .search-item-rate { float: right; opacity: 0.7; }
+    .search-empty { padding: 10px; text-align: center; opacity: 0.5; font-size: 12px; }
+
+    /* 复选框 */
+    .checkbox-group { display: flex; align-items: center; gap: 8px; }
+    .checkbox-input { width: 16px; height: 16px; cursor: pointer; }
+    .checkbox-label { font-size: 12px; opacity: 0.8; cursor: pointer; }
+
+    .form-hint { font-size: 10px; opacity: 0.5; margin-top: 4px; }
+
+    .form-btn-group { display: flex; gap: 10px; margin-top: 18px; }
+    .btn { flex: 1; padding: 11px; border-radius: 10px; border: none; font-size: 13px; font-weight: 600; cursor: pointer; }
+    .btn-cancel { background: rgba(255, 255, 255, 0.1); color: white; }
+    .btn-submit { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+
+    /* Toast */
+    .toast {
+      position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+      background: #333; color: white; padding: 10px 20px;
+      border-radius: 8px; font-size: 13px; z-index: 2000;
+      opacity: 0; transition: opacity 0.3s;
+    }
+    .toast.show { opacity: 1; }
+
+    /* 加载动画 */
+    .loading { text-align: center; padding: 40px; opacity: 0.7; }
+    .spinner {
+      width: 28px; height: 28px;
+      border: 3px solid rgba(255, 255, 255, 0.1);
+      border-top-color: #667eea;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 10px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- 左侧账户列表 -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-title">📁 账户列表</div>
+        <button class="add-account-btn" onclick="openAccountModal('add')">+ 新增账户</button>
+      </div>
+      <div class="account-list" id="accountList">
+        <div class="loading"><div class="spinner"></div></div>
+      </div>
+    </aside>
+
+    <!-- 主内容 -->
+    <main class="main-content">
+      <!-- 概览卡片 -->
+      <div class="overview-card">
+        <div class="overview-header">
+          <div class="overview-title" id="currentAccountName">📊 总收益概览</div>
+          <div class="overview-time" id="updateTime">--</div>
+        </div>
+
+        <!-- 当日收益 -->
+        <div class="today-section">
+          <div class="today-label">💰 当日收益</div>
+          <div class="today-amount" id="todayProfitAmount">+0.00</div>
+          <div class="today-rate" id="todayProfitRate">+0.00%</div>
+        </div>
+
+        <!-- 累计收益 -->
+        <div class="profit-section">
+          <div class="profit-label">📈 累计收益</div>
+          <div class="profit-amount" id="totalProfitAmount">+0.00</div>
+          <div class="profit-rate" id="totalProfitRate">+0.00%</div>
+        </div>
+
+        <!-- 统计 -->
+        <div class="stats-row">
+          <div class="stat-item">
+            <div class="stat-value" id="totalCost">0.00</div>
+            <div class="stat-label">持有金额</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="totalValue">0.00</div>
+            <div class="stat-label">当前市值</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="totalHoldings">0</div>
+            <div class="stat-label">持仓数</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 基金列表 -->
+      <div class="fund-section">
+        <div class="section-header">
+          <div class="section-title">💼 持仓明细</div>
+          <button class="add-fund-btn" onclick="openFundModal()">+ 添加基金</button>
+        </div>
+        <div id="fundList">
+          <div class="empty-state">
+            <div class="empty-icon">📈</div>
+            <div class="empty-text">选择一个账户</div>
+            <div class="empty-hint">或新增一个账户开始管理</div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- 账户模态框 -->
+  <div class="modal-overlay" id="accountModal">
+    <div class="modal">
+      <div class="modal-title" id="accountModalTitle">新增账户</div>
+      <form onsubmit="handleAccountSubmit(event)">
+        <input type="hidden" id="editAccountId">
+        <div class="form-group">
+          <label class="form-label">账户名称</label>
+          <input type="text" class="form-input" id="accountName" placeholder="例如：支付宝、天天基金" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">备注（可选）</label>
+          <input type="text" class="form-input" id="accountDesc" placeholder="例如：养老计划">
+        </div>
+        <div class="form-btn-group">
+          <button type="button" class="btn btn-cancel" onclick="closeAccountModal()">取消</button>
+          <button type="submit" class="btn btn-submit" id="accountSubmitBtn">创建</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 基金模态框 -->
+  <div class="modal-overlay" id="fundModal">
+    <div class="modal">
+      <div class="modal-title" id="fundModalTitle">添加基金</div>
+      <form onsubmit="handleFundSubmit(event)">
+        <input type="hidden" id="editFundId">
+        <input type="hidden" id="fundCode">
+
+        <!-- 基金搜索 -->
+        <div class="form-group">
+          <label class="form-label">基金名称</label>
+          <div class="search-container">
+            <input type="text" class="form-input" id="fundName" placeholder="搜索基金名称..." autocomplete="off">
+            <div class="search-results" id="searchResults"></div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">持有金额 (元)</label>
+          <input type="number" class="form-input" id="fundCost" placeholder="例如：10000" step="0.01" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">累计收益 (元)</label>
+          <input type="number" class="form-input" id="fundProfit" placeholder="例如：500 (亏损填负数)" step="0.01">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">购买日期</label>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <input type="date" class="form-input" id="fundDate" style="flex: 1;">
+            <div class="checkbox-group" style="white-space: nowrap;">
+              <input type="checkbox" id="before315" class="checkbox-input" checked>
+              <label for="before315" class="checkbox-label">15:00前</label>
+            </div>
+          </div>
+          <div class="form-hint">勾选"15:00前"则当日确认，否则T+1确认</div>
+        </div>
+
+        <div class="form-btn-group">
+          <button type="button" class="btn btn-cancel" onclick="closeFundModal()">取消</button>
+          <button type="submit" class="btn btn-submit" id="fundSubmitBtn">添加</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const API = 'http://localhost:3801/api';
+    let currentAccount = null;
+    let accountsData = [];
+    let overviewData = null;
+    let searchTimeout = null;
+
+    // Toast提示
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2500);
+    }
+
+    // 格式化金额
+    function fmtMoney(n) { return (n >= 0 ? '+' : '') + n.toFixed(2); }
+    function fmtRate(n) { return (n >= 0 ? '+' : '') + n.toFixed(2) + '%'; }
+
+    // ========== 基金搜索 ==========
+    async function searchFunds(keyword) {
+      const results = document.getElementById('searchResults');
+      if (!keyword || keyword.length < 1) {
+        results.classList.remove('active');
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API}/fund/search?keyword=${encodeURIComponent(keyword)}`);
+        const result = await res.json();
+
+        if (result.success && result.data.length > 0) {
+          results.innerHTML = result.data.map(f => `
+            <div class="search-item" onclick="selectFund('${f.code}', '${f.name}')">
+              <span>${f.name}</span>
+              <span class="search-item-code">${f.code}</span>
+              <span class="search-item-rate">${f.dailyGrowth > 0 ? '+' : ''}${f.dailyGrowth.toFixed(2)}%</span>
+            </div>
+          `).join('');
+        } else {
+          results.innerHTML = '<div class="search-empty">未找到相关基金</div>';
+        }
+        results.classList.add('active');
+      } catch (e) {
+        console.error('搜索失败', e);
+      }
+    }
+
+    function selectFund(code, name) {
+      document.getElementById('fundCode').value = code;
+      document.getElementById('fundName').value = name;
+      document.getElementById('searchResults').classList.remove('active');
+    }
+
+    // ========== 账户操作 ==========
+    function openAccountModal(mode, account = null) {
+      document.getElementById('accountModal').classList.add('active');
+      if (mode === 'add') {
+        document.getElementById('accountModalTitle').textContent = '新增账户';
+        document.getElementById('accountSubmitBtn').textContent = '创建';
+        document.getElementById('editAccountId').value = '';
+      } else {
+        document.getElementById('accountModalTitle').textContent = '编辑账户';
+        document.getElementById('accountSubmitBtn').textContent = '保存';
+        document.getElementById('editAccountId').value = account.id;
+        document.getElementById('accountName').value = account.name;
+        document.getElementById('accountDesc').value = account.description || '';
+      }
+    }
+
+    function closeAccountModal() {
+      document.getElementById('accountModal').classList.remove('active');
+      document.getElementById('accountName').value = '';
+      document.getElementById('accountDesc').value = '';
+    }
+
+    async function handleAccountSubmit(e) {
+      e.preventDefault();
+      const id = document.getElementById('editAccountId').value;
+      const name = document.getElementById('accountName').value.trim();
+      const description = document.getElementById('accountDesc').value.trim();
+
+      try {
+        if (id) {
+          const res = await fetch(`${API}/accounts/${id}`, {
+            method: 'PUT', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, description })
+          });
+          const result = await res.json();
+          if (result.success) showToast('✅ 账户已保存');
+        } else {
+          const res = await fetch(`${API}/accounts`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, description })
+          });
+          const result = await res.json();
+          if (result.success) showToast('✅ 账户已创建');
+        }
+        closeAccountModal();
+        loadData();
+      } catch (err) { showToast('❌ 操作失败'); }
+    }
+
+    // ========== 基金操作 ==========
+    function openFundModal(fund = null) {
+      if (!currentAccount) { showToast('请先选择账户'); return; }
+      document.getElementById('fundModal').classList.add('active');
+      document.getElementById('fundDate').value = new Date().toISOString().split('T')[0];
+      document.getElementById('before315').checked = true;
+      document.getElementById('searchResults').classList.remove('active');
+
+      if (fund) {
+        document.getElementById('fundModalTitle').textContent = '编辑基金';
+        document.getElementById('fundSubmitBtn').textContent = '保存';
+        document.getElementById('editFundId').value = fund.id;
+        document.getElementById('fundCode').value = fund.fund_code || '';
+        document.getElementById('fundName').value = fund.fund_name;
+        document.getElementById('fundCost').value = fund.cost;
+        document.getElementById('fundProfit').value = fund.profit;
+        document.getElementById('fundDate').value = fund.purchase_date || '';
+        document.getElementById('before315').checked = fund.before_315 !== false;
+      } else {
+        document.getElementById('fundModalTitle').textContent = '添加基金';
+        document.getElementById('fundSubmitBtn').textContent = '添加';
+        document.getElementById('editFundId').value = '';
+        document.getElementById('fundCode').value = '';
+        document.getElementById('fundName').value = '';
+        document.getElementById('fundCost').value = '';
+        document.getElementById('fundProfit').value = '';
+      }
+    }
+
+    function closeFundModal() {
+      document.getElementById('fundModal').classList.remove('active');
+    }
+
+    async function handleFundSubmit(e) {
+      e.preventDefault();
+      const id = document.getElementById('editFundId').value;
+      const fund_code = document.getElementById('fundCode').value;
+      const fund_name = document.getElementById('fundName').value.trim();
+      const cost = parseFloat(document.getElementById('fundCost').value);
+      const profit = parseFloat(document.getElementById('fundProfit').value) || 0;
+      const purchase_date = document.getElementById('fundDate').value;
+      const before_315 = document.getElementById('before315').checked;
+
+      if (!fund_name) {
+        showToast('请选择或输入基金名称');
+        return;
+      }
+
+      try {
+        if (id) {
+          const res = await fetch(`${API}/holdings/${id}`, {
+            method: 'PUT', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ fund_code, fund_name, cost, profit, purchase_date, before_315 })
+          });
+          const result = await res.json();
+          if (result.success) showToast('✅ 已保存');
+        } else {
+          const res = await fetch(`${API}/holdings`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ account_id: currentAccount.id, fund_code, fund_name, cost, profit, purchase_date, before_315 })
+          });
+          const result = await res.json();
+          if (result.success) showToast('✅ 基金已添加');
+        }
+        closeFundModal();
+        loadData();
+      } catch (err) { showToast('❌ 操作失败'); }
+    }
+
+    async function deleteFund(id) {
+      if (!confirm('确定删除这只基金？')) return;
+      try {
+        const res = await fetch(`${API}/holdings/${id}`, { method: 'DELETE' });
+        const result = await res.json();
+        if (result.success) { showToast('🗑️ 已删除'); loadData(); }
+      } catch (err) { showToast('❌ 删除失败'); }
+    }
+
+    // 选择账户
+    function selectAccount(account) {
+      currentAccount = account;
+      renderAccounts();
+      renderOverview();
+      renderFunds();
+    }
+
+    // ========== 渲染 ==========
+    function renderAccounts() {
+      const list = document.getElementById('accountList');
+      if (accountsData.length === 0) {
+        list.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">📁</div>
+            <div class="empty-text">暂无账户</div>
+            <div class="empty-hint">点击上方创建</div>
+          </div>`;
+        return;
+      }
+
+      list.innerHTML = accountsData.map(acc => {
+        const isActive = currentAccount && currentAccount.id === acc.id;
+        const todayClass = acc.todayProfit >= 0 ? '' : 'negative';
+        return `
+          <div class="account-item ${isActive ? 'active' : ''}" onclick="selectAccount(${JSON.stringify(acc).replace(/"/g, '&quot;')})">
+            <div class="account-header">
+              <div class="account-name">${acc.name}</div>
+              <div class="account-today ${todayClass}">${fmtMoney(acc.todayProfit)}</div>
+            </div>
+            <div class="account-stats">
+              持有 ${acc.totalCost.toFixed(0)} 元 · ${acc.holdings ? acc.holdings.length : 0} 只 · 累计${fmtMoney(acc.totalProfit)}
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    function renderOverview() {
+      const s = overviewData ? overviewData.summary : { 
+        totalCost: 0, totalValue: 0, totalProfit: 0, todayProfit: 0, 
+        totalProfitRate: 0, todayProfitRate: 0, updateTime: '' 
+      };
+
+      if (currentAccount) {
+        // 显示选中账户的数据
+        document.getElementById('currentAccountName').textContent = `📁 ${currentAccount.name}`;
+        document.getElementById('todayProfitAmount').textContent = fmtMoney(currentAccount.todayProfit);
+        document.getElementById('todayProfitAmount').className = 'today-amount' + (currentAccount.todayProfit < 0 ? ' negative' : '');
+        document.getElementById('todayProfitRate').textContent = fmtRate(currentAccount.todayProfitRate || 0);
+        document.getElementById('totalProfitAmount').textContent = fmtMoney(currentAccount.totalProfit);
+        document.getElementById('totalProfitAmount').className = 'profit-amount' + (currentAccount.totalProfit < 0 ? ' negative' : '');
+        document.getElementById('totalProfitRate').textContent = fmtRate(currentAccount.profitRate || 0);
+        document.getElementById('totalCost').textContent = currentAccount.totalCost.toFixed(2);
+        document.getElementById('totalValue').textContent = currentAccount.totalValue.toFixed(2);
+        document.getElementById('totalHoldings').textContent = currentAccount.holdings ? currentAccount.holdings.length : 0;
+      } else {
+        // 显示所有账户汇总数据
+        document.getElementById('currentAccountName').textContent = '📊 总收益概览';
+        document.getElementById('todayProfitAmount').textContent = fmtMoney(s.todayProfit);
+        document.getElementById('todayProfitAmount').className = 'today-amount' + (s.todayProfit < 0 ? ' negative' : '');
+        document.getElementById('todayProfitRate').textContent = fmtRate(s.todayProfitRate || 0);
+        document.getElementById('totalProfitAmount').textContent = fmtMoney(s.totalProfit);
+        document.getElementById('totalProfitAmount').className = 'profit-amount' + (s.totalProfit < 0 ? ' negative' : '');
+        document.getElementById('totalProfitRate').textContent = fmtRate(s.totalProfitRate || 0);
+        document.getElementById('totalCost').textContent = s.totalCost.toFixed(2);
+        document.getElementById('totalValue').textContent = s.totalValue.toFixed(2);
+        document.getElementById('totalHoldings').textContent = s.holdingsCount || 0;
+      }
+      document.getElementById('updateTime').textContent = s.updateTime || new Date().toLocaleTimeString();
+    }
+
+    function renderFunds() {
+      const list = document.getElementById('fundList');
+      if (!currentAccount) {
+        list.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">📈</div>
+            <div class="empty-text">选择一个账户</div>
+            <div class="empty-hint">查看该账户的持仓明细</div>
+          </div>`;
+        return;
+      }
+
+      const holdings = currentAccount.holdings || [];
+      if (holdings.length === 0) {
+        list.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">📋</div>
+            <div class="empty-text">该账户暂无持仓</div>
+            <div class="empty-hint">点击上方添加基金</div>
+          </div>`;
+        return;
+      }
+
+      list.innerHTML = holdings.map(h => {
+        const profitClass = h.profit >= 0 ? '' : 'negative';
+        const todayClass = h.todayProfit >= 0 ? '' : 'negative';
+        const profitRate = h.cost ? (h.profit / h.cost * 100) : 0;
+        const confirmText = h.before_315 ? '当日确认' : 'T+1确认';
+        const currentValue = h.currentValue || (h.cost + h.profit);
+        return `
+          <div class="fund-card">
+            <div class="fund-info">
+              <div class="fund-name">${h.fund_name}</div>
+              <div class="fund-meta">
+                <span>📅 ${h.purchase_date || '未设置'}</span>
+                <span>⏰ ${confirmText}</span>
+                ${h.price ? `<span>🕐 ${h.price.updateTime}</span>` : ''}
+              </div>
+              <div class="fund-details">持有 ${h.cost.toFixed(0)} 元 → 市值 ${currentValue.toFixed(0)} 元</div>
+            </div>
+            <div class="fund-today">
+              <div class="fund-today-amount ${todayClass}">${fmtMoney(h.todayProfit)}</div>
+              <div class="fund-today-label">当日收益</div>
+            </div>
+            <div class="fund-profit">
+              <div class="fund-profit-amount ${profitClass}">${fmtMoney(h.profit)}</div>
+              <div class="fund-profit-rate">${fmtRate(profitRate)}</div>
+            </div>
+            <div class="fund-actions">
+              <button class="fund-action-btn" onclick="openFundModal(${JSON.stringify(h).replace(/"/g, '&quot;')})">✏️</button>
+              <button class="fund-action-btn delete" onclick="deleteFund('${h.id}')">🗑️</button>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    // 加载数据
+    async function loadData() {
+      try {
+        const res = await fetch(`${API}/overview`);
+        const result = await res.json();
+        if (result.success) {
+          overviewData = result.data;
+          accountsData = result.data.accounts || [];
+          // 更新当前选中账户的数据
+          if (currentAccount) {
+            currentAccount = accountsData.find(a => a.id === currentAccount.id) || null;
+          }
+        }
+      } catch (err) {
+        console.error('加载失败', err);
+        overviewData = null;
+        accountsData = [];
+        currentAccount = null;
+      }
+      renderAccounts();
+      renderOverview();
+      renderFunds();
+    }
+
+    // 初始化
+    document.addEventListener('DOMContentLoaded', () => {
+      loadData();
+      // 每10分钟刷新一次
+      setInterval(loadData, 10 * 60 * 1000);
+
+      // 搜索输入监听
+      const fundNameInput = document.getElementById('fundName');
+      fundNameInput.addEventListener('input', (e) => {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => searchFunds(e.target.value), 300);
+      });
+
+      // 点击外部关闭搜索结果
+      document.addEventListener('click', (e) => {
+        if (!e.target.closest('.search-container')) {
+          document.getElementById('searchResults').classList.remove('active');
+        }
+      });
+    });
+
+    // 点击外部关闭模态框
+    ['accountModal', 'fundModal'].forEach(id => {
+      document.getElementById(id).addEventListener('click', e => {
+        if (e.target.classList.contains('modal-overlay')) {
+          document.getElementById(id).classList.remove('active');
+        }
+      });
+    });
+  </script>
+</body>
+</html>

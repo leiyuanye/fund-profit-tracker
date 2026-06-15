@@ -1,0 +1,26 @@
+# Token文件
+token.txt
+
+# 依赖
+node_modules/
+
+# 日志
+*.log
+
+# 数据文件
+database/*.json
+
+# 环境变量
+.env
+.env.local
+
+# IDE
+.idea/
+.vscode/
+
+# 操作系统
+.DS_Store
+Thumbs.db
+
+# Git
+.git/

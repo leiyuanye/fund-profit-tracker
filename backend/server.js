@@ -212,7 +212,7 @@ const FUND_SEARCH_SOURCES = [
   {
     name: '天天基金实时',
     enabled: true,
-    priority: 1, // 优先级，数字越小越优先
+    priority: 1,
     search: async (keyword) => {
       const funds = [];
       // 按基金代码搜索
@@ -234,31 +234,46 @@ const FUND_SEARCH_SOURCES = [
     }
   },
   {
-    name: '支付宝基金',
+    name: '支付宝基金搜索',
     enabled: true,
     priority: 2,
     search: async (keyword) => {
       const funds = [];
       try {
-        // 支付宝基金搜索接口
-        const url = `https://fund.1234567.com.cn/fundsearch/search?keyword=${encodeURIComponent(keyword)}&type=0&pageIndex=1&pageSize=20`;
-        const response = await fetch(url, {
+        // 尝试不同的搜索接口
+        const searchUrl = `https://fund.eastmoney.com/Interface/AllFundInterface?para=1&pageIndex=1&pageSize=1000&sort=JJJZ&order=desc&_=${Date.now()}`;
+        const response = await fetch(searchUrl, {
           headers: {
+            'Referer': 'https://fund.eastmoney.com/',
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
           }
         });
-        const data = await response.json();
         
-        if (data.data && Array.isArray(data.data)) {
-          for (const fund of data.data) {
-            funds.push({
-              code: fund.fundcode || fund.FundCode,
-              name: fund.fundname || fund.FundName,
-              type: fund.type || '',
-              netWorth: parseFloat(fund.networth || fund.NetWorth) || 0,
-              dailyGrowth: parseFloat(fund.growth || fund.Growth) || 0,
-              source: '支付宝'
-            });
+        if (response.ok) {
+          const text = await response.text();
+          // 尝试解析JSON
+          try {
+            const data = JSON.parse(text);
+            if (data.Data && Array.isArray(data.Data)) {
+              const keywordLower = keyword.toLowerCase();
+              for (const fund of data.Data) {
+                if (fund.NAME && 
+                    (fund.NAME.includes(keyword) || 
+                     fund.NAME.toLowerCase().includes(keywordLower))) {
+                  funds.push({
+                    code: fund.CODE,
+                    name: fund.NAME,
+                    type: '',
+                    netWorth: parseFloat(fund.JJJZ) || 0,
+                    dailyGrowth: parseFloat(fund.Rate) || 0,
+                    source: '天天基金数据'
+                  });
+                  if (funds.length >= 30) break;
+                }
+              }
+            }
+          } catch (parseError) {
+            // JSON解析失败，尝试其他方式
           }
         }
       } catch (error) {
@@ -268,7 +283,7 @@ const FUND_SEARCH_SOURCES = [
     }
   },
   {
-    name: '天天基金列表',
+    name: '天天基金列表搜索',
     enabled: true,
     priority: 3,
     search: async (keyword) => {
@@ -279,7 +294,8 @@ const FUND_SEARCH_SOURCES = [
       for (const fund of fundList) {
         if (fund.name.includes(keyword) ||
             fund.name.toLowerCase().includes(keywordLower) ||
-            fund.namePinyin.toLowerCase().includes(keywordLower)) {
+            fund.namePinyin.toLowerCase().includes(keywordLower) ||
+            fund.code.includes(keyword)) {
           funds.push({
             code: fund.code,
             name: fund.name,
@@ -289,7 +305,37 @@ const FUND_SEARCH_SOURCES = [
             source: '天天基金列表'
           });
           
-          if (funds.length >= 15) break;
+          if (funds.length >= 20) break;
+        }
+      }
+      return funds;
+    }
+  },
+  {
+    name: '按代码范围搜索',
+    enabled: true,
+    priority: 4,
+    search: async (keyword) => {
+      const funds = [];
+      // 如果关键词是纯数字，尝试搜索附近代码
+      const codeMatch = keyword.match(/\d{4,6}/);
+      if (codeMatch) {
+        const baseCode = codeMatch[0].substring(0, 4);
+        // 搜索0000-0099范围的基金
+        for (let i = 0; i < 100; i += 10) {
+          const searchCode = baseCode + String(i).padStart(2, '0');
+          const price = await getFundPrice(searchCode);
+          if (price && price.name) {
+            funds.push({
+              code: price.code,
+              name: price.name,
+              type: '',
+              netWorth: price.netWorth,
+              dailyGrowth: price.estimatedGrowth,
+              source: '代码范围'
+            });
+          }
+          if (funds.length >= 20) break;
         }
       }
       return funds;
@@ -327,14 +373,14 @@ app.get('/api/fund/search', async (req, res) => {
       
       const key = fund.code.toString().padStart(6, '0');
       
-      // 如果已存在，保留优先级更高的（优先使用实时数据）
+      // 如果已存在，保留优先级更高的
       if (!fundMap.has(key)) {
         fundMap.set(key, fund);
       }
     });
     
-    // 转换为数组，最多返回20条
-    const funds = Array.from(fundMap.values()).slice(0, 20);
+    // 转换为数组，最多返回30条
+    const funds = Array.from(fundMap.values()).slice(0, 30);
     
     res.json({ success: true, data: funds });
   } catch (error) {

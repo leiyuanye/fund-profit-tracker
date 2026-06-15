@@ -261,6 +261,133 @@ app.get('/api/fund/search', async (req, res) => {
   }
 });
 
+/**
+ * 获取基金历史净值
+ * 根据指定日期获取当日的单位净值
+ */
+app.get('/api/fund/networth', async (req, res) => {
+  try {
+    const { code, date } = req.query;
+    
+    if (!code) {
+      return res.status(400).json({ success: false, message: '基金代码不能为空' });
+    }
+    
+    // 如果没有指定日期，返回实时净值
+    if (!date) {
+      const price = await getFundPrice(code);
+      if (price) {
+        return res.json({
+          success: true,
+          data: {
+            netWorth: price.netWorth,
+            totalWorth: price.totalWorth,
+            date: new Date().toISOString().split('T')[0],
+            isToday: true
+          }
+        });
+      }
+      return res.json({ success: false, message: '获取净值失败' });
+    }
+    
+    // 获取指定日期的净值
+    try {
+      const targetDate = new Date(date);
+      const startDate = targetDate.toISOString().split('T')[0];
+      const endDate = startDate;
+      
+      const url = `https://api.fund.eastmoney.com/f10/lsjz?fundCode=${code}&pageIndex=1&pageSize=5&startDate=${startDate}&endDate=${endDate}`;
+      
+      const response = await fetch(url, {
+        headers: {
+          'Referer': 'https://fund.eastmoney.com/',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        }
+      });
+      
+      const data = await response.json();
+      
+      if (data.Data && data.Data.LSJZList && data.Data.LSJZList.length > 0) {
+        const record = data.Data.LSJZList[0];
+        return res.json({
+          success: true,
+          data: {
+            netWorth: parseFloat(record.DWJZ) || 0,
+            totalWorth: parseFloat(record.LJJZ) || 0,
+            date: record.FSRQ,
+            isToday: false
+          }
+        });
+      }
+      
+      // 如果没有找到该日期的数据，尝试获取最近的数据
+      const latestUrl = `https://api.fund.eastmoney.com/f10/lsjz?fundCode=${code}&pageIndex=1&pageSize=10`;
+      const latestResponse = await fetch(latestUrl, {
+        headers: {
+          'Referer': 'https://fund.eastmoney.com/',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        }
+      });
+      const latestData = await latestResponse.json();
+      
+      if (latestData.Data && latestData.Data.LSJZList && latestData.Data.LSJZList.length > 0) {
+        // 找到比目标日期更早或相等的记录
+        const targetTime = new Date(date).getTime();
+        for (const record of latestData.Data.LSJZList) {
+          const recordTime = new Date(record.FSRQ).getTime();
+          if (recordTime <= targetTime) {
+            return res.json({
+              success: true,
+              data: {
+                netWorth: parseFloat(record.DWJZ) || 0,
+                totalWorth: parseFloat(record.LJJZ) || 0,
+                date: record.FSRQ,
+                isToday: false,
+                note: `最近可用净值（${date}非交易日）`
+              }
+            });
+          }
+        }
+        
+        // 返回最新的净值
+        const latestRecord = latestData.Data.LSJZList[0];
+        return res.json({
+          success: true,
+          data: {
+            netWorth: parseFloat(latestRecord.DWJZ) || 0,
+            totalWorth: parseFloat(latestRecord.LJJZ) || 0,
+            date: latestRecord.FSRQ,
+            isToday: false,
+            note: `当前最新净值（${date}之前无可用数据）`
+          }
+        });
+      }
+      
+      res.json({ success: false, message: '未找到净值数据' });
+    } catch (error) {
+      console.error('获取历史净值失败:', error);
+      // 如果API失败，返回实时净值作为备选
+      const price = await getFundPrice(code);
+      if (price) {
+        return res.json({
+          success: true,
+          data: {
+            netWorth: price.netWorth,
+            totalWorth: price.netWorth,
+            date: new Date().toISOString().split('T')[0],
+            isToday: true,
+            note: '使用估算净值（历史接口不可用）'
+          }
+        });
+      }
+      res.status(500).json({ success: false, message: '获取净值失败' });
+    }
+  } catch (error) {
+    console.error('获取净值异常:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 // ========== 账户管理 API ==========
 
 app.get('/api/accounts', (req, res) => {

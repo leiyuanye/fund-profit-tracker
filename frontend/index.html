@@ -52,7 +52,6 @@
       transition: all 0.3s;
       border: 2px solid transparent;
       position: relative;
-      overflow: hidden;
     }
     .account-item:hover { background: rgba(255, 255, 255, 0.08); }
     .account-item.active { 
@@ -74,11 +73,37 @@
       text-align: left;
     }
 
-    .account-header { display: flex; justify-content: space-between; margin-bottom: 4px; }
+    .account-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
     .account-name { font-size: 13px; font-weight: 500; }
     .account-today { font-size: 12px; font-weight: bold; color: #ffd700; }
     .account-today.negative { color: #00ff88; }
     .account-stats { font-size: 10px; opacity: 0.6; }
+
+    /* 账户编辑按钮 */
+    .account-actions {
+      display: flex;
+      gap: 4px;
+      margin-top: 8px;
+    }
+    .account-action-btn {
+      flex: 1;
+      padding: 6px;
+      border: none;
+      border-radius: 6px;
+      font-size: 11px;
+      cursor: pointer;
+      background: rgba(255, 255, 255, 0.1);
+      color: rgba(255, 255, 255, 0.7);
+      transition: all 0.2s;
+    }
+    .account-action-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+    }
+    .account-action-btn.delete:hover {
+      background: rgba(255, 71, 87, 0.3);
+      color: #ff4757;
+    }
 
     /* 主内容区 */
     .main-content { flex: 1; margin-left: 280px; padding: 25px; }
@@ -117,16 +142,8 @@
       background: rgba(0,0,0,0.15);
       border-radius: 12px;
     }
-    .profit-left .section-label {
-      font-size: 12px;
-      opacity: 0.8;
-      margin-bottom: 8px;
-    }
-    .profit-left .section-amount {
-      font-size: 32px;
-      font-weight: bold;
-      color: #ffd700;
-    }
+    .profit-left .section-label { font-size: 12px; opacity: 0.8; margin-bottom: 8px; }
+    .profit-left .section-amount { font-size: 32px; font-weight: bold; color: #ffd700; }
     .profit-left .section-amount.negative { color: #00ff88; }
     .profit-left .section-rate { font-size: 14px; opacity: 0.8; margin-top: 4px; }
 
@@ -256,7 +273,6 @@
 
     .form-row { display: flex; gap: 10px; }
     .form-row .form-group { flex: 1; }
-    .form-row .form-group:last-child { flex: 0.6; }
 
     .shares-preview {
       background: rgba(102, 126, 234, 0.15);
@@ -268,10 +284,8 @@
     }
     .shares-preview span { color: #667eea; font-weight: 600; }
 
-    /* 基金搜索下拉 - 独立定位 */
-    .fund-search-wrapper {
-      position: relative;
-    }
+    /* 基金搜索下拉 */
+    .fund-search-wrapper { position: relative; }
     .search-dropdown {
       position: absolute;
       top: 100%;
@@ -310,6 +324,68 @@
     .search-item-rate.down { color: #00ff88; }
     .search-empty { padding: 20px; text-align: center; opacity: 0.5; font-size: 13px; }
 
+    /* 选中基金显示 */
+    .selected-fund {
+      background: rgba(102, 126, 234, 0.15);
+      border: 1px solid rgba(102, 126, 234, 0.3);
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-top: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .selected-fund-info { flex: 1; }
+    .selected-fund-name { font-size: 13px; font-weight: 500; }
+    .selected-fund-code { font-size: 11px; opacity: 0.5; margin-top: 2px; }
+    .selected-fund-change {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
+    .selected-fund-change.up { background: rgba(255,77,79,0.2); color: #ff4d4f; }
+    .selected-fund-change.down { background: rgba(0,255,136,0.2); color: #00ff88; }
+    .selected-fund-remove {
+      background: none;
+      border: none;
+      color: rgba(255,255,255,0.5);
+      cursor: pointer;
+      font-size: 18px;
+      margin-left: 10px;
+      padding: 4px;
+    }
+    .selected-fund-remove:hover { color: #ff4d4f; }
+
+    /* 净值获取状态 */
+    .networth-status {
+      font-size: 11px;
+      padding: 6px 10px;
+      border-radius: 6px;
+      margin-top: 6px;
+      display: none;
+    }
+    .networth-status.loading {
+      display: block;
+      background: rgba(102, 126, 234, 0.15);
+      color: rgba(255,255,255,0.7);
+    }
+    .networth-status.success {
+      display: block;
+      background: rgba(0, 255, 136, 0.1);
+      color: #00ff88;
+    }
+    .networth-status.warning {
+      display: block;
+      background: rgba(255, 152, 0, 0.15);
+      color: #ff9800;
+    }
+    .networth-status.error {
+      display: block;
+      background: rgba(255, 71, 87, 0.15);
+      color: #ff4757;
+    }
+
     .checkbox-group { display: flex; align-items: center; gap: 8px; }
     .checkbox-input { width: 16px; height: 16px; cursor: pointer; }
     .checkbox-label { font-size: 12px; opacity: 0.8; cursor: pointer; }
@@ -340,40 +416,6 @@
       margin: 0 auto 10px;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* 选中的基金显示 */
-    .selected-fund {
-      background: rgba(102, 126, 234, 0.15);
-      border: 1px solid rgba(102, 126, 234, 0.3);
-      border-radius: 10px;
-      padding: 12px 14px;
-      margin-top: 8px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .selected-fund-info { flex: 1; }
-    .selected-fund-name { font-size: 13px; font-weight: 500; }
-    .selected-fund-code { font-size: 11px; opacity: 0.5; margin-top: 2px; }
-    .selected-fund-networth { font-size: 11px; opacity: 0.7; margin-top: 4px; }
-    .selected-fund-change {
-      font-size: 12px;
-      font-weight: 600;
-      padding: 4px 8px;
-      border-radius: 4px;
-    }
-    .selected-fund-change.up { background: rgba(255,77,79,0.2); color: #ff4d4f; }
-    .selected-fund-change.down { background: rgba(0,255,136,0.2); color: #00ff88; }
-    .selected-fund-remove {
-      background: none;
-      border: none;
-      color: rgba(255,255,255,0.5);
-      cursor: pointer;
-      font-size: 18px;
-      margin-left: 10px;
-      padding: 4px;
-    }
-    .selected-fund-remove:hover { color: #ff4d4f; }
   </style>
 </head>
 <body>
@@ -474,6 +516,7 @@
       <form id="fundForm">
         <input type="hidden" id="editFundId">
         <input type="hidden" id="fundCode">
+        <input type="hidden" id="buyNetWorth">
 
         <!-- 基金搜索 -->
         <div class="form-group">
@@ -489,7 +532,6 @@
             <div class="selected-fund-info">
               <div class="selected-fund-name" id="selectedFundName">-</div>
               <div class="selected-fund-code" id="selectedFundCode">-</div>
-              <div class="selected-fund-networth" id="selectedFundNetworth">净值: -</div>
             </div>
             <span class="selected-fund-change" id="selectedFundChange">-</span>
             <button type="button" class="selected-fund-remove" id="removeSelectedFund">×</button>
@@ -497,25 +539,9 @@
         </div>
 
         <!-- 买入信息 -->
-        <div class="form-row">
-          <div class="form-group">
-            <label class="form-label">买入金额 (元)</label>
-            <input type="number" class="form-input" id="buyAmount" placeholder="例如：10000" step="0.01">
-          </div>
-          <div class="form-group">
-            <label class="form-label">买入净值</label>
-            <input type="number" class="form-input" id="buyNetWorth" placeholder="例如：1.23" step="0.001">
-          </div>
-        </div>
-        <div class="shares-preview" id="sharesPreview">
-          预计持有份额：<span>--</span> 份
-        </div>
-
-        <!-- 历史收益调整 -->
-        <div class="form-group" style="margin-top: 14px;">
-          <label class="form-label">历史收益调整 (元)</label>
-          <input type="number" class="form-input" id="fundProfit" placeholder="用于修正分红等，默认为0" step="0.01">
-          <div class="form-hint">如有分红再投入或特殊情况，可手动调整</div>
+        <div class="form-group">
+          <label class="form-label">买入金额 (元)</label>
+          <input type="number" class="form-input" id="buyAmount" placeholder="例如：10000" step="0.01">
         </div>
 
         <div class="form-group">
@@ -527,7 +553,19 @@
               <label for="before315" class="checkbox-label">15:00前</label>
             </div>
           </div>
-          <div class="form-hint">勾选"15:00前"则当日确认，否则T+1确认</div>
+        </div>
+
+        <!-- 净值状态显示 -->
+        <div class="networth-status" id="networthStatus"></div>
+        <div class="shares-preview" id="sharesPreview">
+          预计持有份额：<span>--</span> 份
+        </div>
+
+        <!-- 历史收益调整 -->
+        <div class="form-group" style="margin-top: 14px;">
+          <label class="form-label">历史收益调整 (元)</label>
+          <input type="number" class="form-input" id="fundProfit" placeholder="用于修正分红等，默认为0" step="0.01">
+          <div class="form-hint">如有分红再投入或特殊情况，可手动调整</div>
         </div>
 
         <div class="form-btn-group">
@@ -547,9 +585,9 @@
     let currentAccount = null;
     let accountsData = [];
     let overviewData = null;
-    let selectedFund = null; // 当前选中的基金
+    let selectedFund = null;
     let searchTimeout = null;
-    let isSearching = false;
+    let networthTimeout = null;
 
     // ========== 工具函数 ==========
     function showToast(msg) {
@@ -574,7 +612,55 @@
       searchInput: document.getElementById('fundSearchInput'),
       selectedFundDisplay: document.getElementById('selectedFundDisplay'),
       sharesPreview: document.getElementById('sharesPreview'),
+      networthStatus: document.getElementById('networthStatus'),
     };
+
+    // ========== 净值状态显示 ==========
+    function showNetworthStatus(type, message) {
+      elements.networthStatus.className = 'networth-status ' + type;
+      elements.networthStatus.textContent = message;
+    }
+
+    function hideNetworthStatus() {
+      elements.networthStatus.className = 'networth-status';
+      elements.networthStatus.style.display = 'none';
+    }
+
+    // ========== 获取历史净值 ==========
+    async function fetchNetworth(code, date) {
+      if (!code || !date) return;
+
+      showNetworthStatus('loading', '正在获取净值...');
+
+      try {
+        const res = await fetch(`${API}/fund/networth?code=${code}&date=${date}`);
+        const result = await res.json();
+
+        if (result.success && result.data) {
+          const data = result.data;
+          document.getElementById('buyNetWorth').value = data.netWorth.toFixed(4);
+          
+          if (data.isToday) {
+            showNetworthStatus('success', `📈 今日净值: ${data.netWorth.toFixed(4)} (估算值)`);
+          } else if (data.note) {
+            showNetworthStatus('warning', `📅 ${data.date} 净值: ${data.netWorth.toFixed(4)} (${data.note})`);
+          } else {
+            showNetworthStatus('success', `📅 ${data.date} 净值: ${data.netWorth.toFixed(4)}`);
+          }
+          
+          updateSharesPreview();
+        } else {
+          document.getElementById('buyNetWorth').value = '1.0000';
+          showNetworthStatus('error', '获取净值失败，将使用默认值1.0');
+          updateSharesPreview();
+        }
+      } catch (error) {
+        console.error('获取净值失败:', error);
+        document.getElementById('buyNetWorth').value = '1.0000';
+        showNetworthStatus('error', '网络错误，使用默认值1.0');
+        updateSharesPreview();
+      }
+    }
 
     // ========== 基金搜索 ==========
     async function searchFunds(keyword) {
@@ -585,17 +671,15 @@
         return;
       }
 
-      // 显示加载中
       dropdown.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
       dropdown.classList.add('show');
-      isSearching = true;
 
       try {
         const res = await fetch(`${API}/fund/search?keyword=${encodeURIComponent(keyword)}`);
         const result = await res.json();
         
         if (!result.success || !result.data || result.data.length === 0) {
-          dropdown.innerHTML = '<div class="search-empty">未找到相关基金，请尝试其他关键词</div>';
+          dropdown.innerHTML = '<div class="search-empty">未找到相关基金</div>';
           return;
         }
 
@@ -617,62 +701,50 @@
 
       } catch (error) {
         console.error('搜索失败:', error);
-        dropdown.innerHTML = '<div class="search-empty">搜索失败，请稍后重试</div>';
-      } finally {
-        isSearching = false;
+        dropdown.innerHTML = '<div class="search-empty">搜索失败</div>';
       }
     }
 
     function selectFund(fund) {
       selectedFund = fund;
       
-      // 填充表单
       document.getElementById('fundCode').value = fund.code;
       elements.searchInput.value = fund.name;
-      document.getElementById('buyNetWorth').value = fund.netWorth ? fund.netWorth.toFixed(4) : '1.0000';
       
-      // 显示选中基金
       elements.selectedFundDisplay.style.display = 'flex';
       document.getElementById('selectedFundName').textContent = fund.name;
       document.getElementById('selectedFundCode').textContent = fund.code;
-      document.getElementById('selectedFundNetworth').textContent = `净值: ${fund.netWorth ? fund.netWorth.toFixed(4) : '-'}`;
       
       const changeEl = document.getElementById('selectedFundChange');
       const isUp = fund.dailyGrowth >= 0;
       changeEl.textContent = `${isUp ? '+' : ''}${fund.dailyGrowth.toFixed(2)}%`;
       changeEl.className = `selected-fund-change ${isUp ? 'up' : 'down'}`;
       
-      // 隐藏下拉
       elements.searchDropdown.classList.remove('show');
       
-      // 更新份额预览
-      updateSharesPreview();
-      
-      // 清空搜索输入框的显示名称
-      elements.searchInput.placeholder = '已选择: ' + fund.name;
+      // 自动获取净值
+      const date = document.getElementById('fundDate').value;
+      if (date) {
+        fetchNetworth(fund.code, date);
+      }
     }
 
     function clearSelectedFund() {
       selectedFund = null;
       document.getElementById('fundCode').value = '';
       elements.searchInput.value = '';
-      elements.searchInput.placeholder = '输入基金名称或6位代码搜索...';
       elements.selectedFundDisplay.style.display = 'none';
+      document.getElementById('buyNetWorth').value = '';
+      hideNetworthStatus();
       updateSharesPreview();
     }
 
     function updateSharesPreview() {
       const buyAmount = parseFloat(document.getElementById('buyAmount').value) || 0;
-      let buyNetWorth = parseFloat(document.getElementById('buyNetWorth').value);
-      
-      if (!buyNetWorth && selectedFund && selectedFund.netWorth) {
-        buyNetWorth = selectedFund.netWorth;
-      }
-      
-      if (!buyNetWorth) buyNetWorth = 1;
+      const buyNetWorth = parseFloat(document.getElementById('buyNetWorth').value) || 1;
       
       const shares = buyNetWorth > 0 ? buyAmount / buyNetWorth : 0;
-      elements.sharesPreview.innerHTML = `预计持有份额：<span>${shares.toFixed(2)}</span> 份`;
+      elements.sharesPreview.innerHTML = `📊 预计持有份额：<span>${shares.toFixed(2)}</span> 份`;
     }
 
     // ========== 账户操作 ==========
@@ -714,6 +786,15 @@
       return result;
     }
 
+    async function deleteAccount(id) {
+      if (!confirm('确定删除该账户？所有持仓数据将一并删除！')) return;
+      
+      const res = await fetch(`${API}/accounts/${id}`, { method: 'DELETE' });
+      const result = await res.json();
+      if (!result.success) throw new Error(result.message);
+      return result;
+    }
+
     // ========== 基金操作 ==========
     function openFundModal(fund = null) {
       elements.fundModal.classList.add('active');
@@ -722,7 +803,6 @@
       document.getElementById('editFundId').value = '';
       document.getElementById('fundCode').value = '';
       elements.searchInput.value = '';
-      elements.searchInput.placeholder = '输入基金名称或6位代码搜索...';
       elements.selectedFundDisplay.style.display = 'none';
       document.getElementById('buyAmount').value = '';
       document.getElementById('buyNetWorth').value = '';
@@ -730,6 +810,7 @@
       document.getElementById('fundDate').value = new Date().toISOString().split('T')[0];
       document.getElementById('before315').checked = true;
       selectedFund = null;
+      hideNetworthStatus();
       updateSharesPreview();
       
       if (fund) {
@@ -737,7 +818,6 @@
         document.getElementById('fundSubmitBtn').textContent = '保存';
         document.getElementById('editFundId').value = fund.id;
         
-        // 恢复基金数据
         selectedFund = {
           code: fund.fund_code || '',
           name: fund.fund_name,
@@ -747,13 +827,12 @@
         
         document.getElementById('fundCode').value = selectedFund.code;
         elements.searchInput.value = selectedFund.name;
-        elements.searchInput.placeholder = '已选择: ' + selectedFund.name;
         
         elements.selectedFundDisplay.style.display = 'flex';
         document.getElementById('selectedFundName').textContent = selectedFund.name;
         document.getElementById('selectedFundCode').textContent = selectedFund.code || '-';
-        document.getElementById('selectedFundNetworth').textContent = `净值: ${selectedFund.netWorth.toFixed(4)}`;
         document.getElementById('selectedFundChange').textContent = '-';
+        document.getElementById('selectedFundChange').className = 'selected-fund-change';
         
         document.getElementById('buyAmount').value = fund.buy_amount || '';
         document.getElementById('buyNetWorth').value = fund.buy_net_worth ? fund.buy_net_worth.toFixed(4) : '';
@@ -761,6 +840,7 @@
         document.getElementById('fundDate').value = fund.purchase_date || '';
         document.getElementById('before315').checked = fund.before_315 !== false;
         
+        showNetworthStatus('success', `📅 买入净值: ${fund.buy_net_worth ? fund.buy_net_worth.toFixed(4) : '-'}`);
         updateSharesPreview();
       } else {
         document.getElementById('fundModalTitle').textContent = '添加基金';
@@ -833,6 +913,10 @@
               </div>
               <div class="account-stats">
                 投入 ${(acc.totalInvestment || 0).toFixed(0)} 元 · ${acc.holdings ? acc.holdings.length : 0} 只 · 累计${fmtMoney(acc.totalProfit)}
+              </div>
+              <div class="account-actions">
+                <button class="account-action-btn" data-edit-account='${JSON.stringify(acc).replace(/'/g, "&#39;")}'>✏️ 编辑</button>
+                <button class="account-action-btn delete" data-delete-account-id="${acc.id}">🗑️ 删除</button>
               </div>
             </div>
           </div>`;
@@ -983,6 +1067,45 @@
         }
       });
 
+      // 账户列表操作
+      elements.accountList.addEventListener('click', async (e) => {
+        // 编辑账户
+        const editBtn = e.target.closest('[data-edit-account]');
+        if (editBtn) {
+          try {
+            const account = JSON.parse(editBtn.dataset.editAccount);
+            openAccountModal('edit', account);
+          } catch (err) {
+            console.error('解析账户数据失败:', err);
+          }
+          return;
+        }
+        
+        // 删除账户
+        const deleteBtn = e.target.closest('[data-delete-account-id]');
+        if (deleteBtn) {
+          const id = deleteBtn.dataset.deleteAccountId;
+          try {
+            await deleteAccount(id);
+            showToast('🗑️ 已删除');
+            if (currentAccount && currentAccount.id === id) {
+              currentAccount = null;
+            }
+            await loadData();
+          } catch (err) {
+            showToast('❌ 删除失败: ' + err.message);
+          }
+          return;
+        }
+        
+        // 选择账户
+        const item = e.target.closest('.account-item');
+        if (item) {
+          const id = item.dataset.accountId;
+          if (id) selectAccount(id);
+        }
+      });
+
       // 添加基金按钮
       document.getElementById('addFundBtn').addEventListener('click', () => {
         if (!currentAccount) {
@@ -998,23 +1121,20 @@
         const value = e.target.value.trim();
         clearTimeout(searchTimeout);
         
-        // 如果清空了输入
         if (!value) {
           elements.searchDropdown.classList.remove('show');
           clearSelectedFund();
           return;
         }
         
-        // 移除已选基金状态
         if (selectedFund && value !== selectedFund.name) {
           clearSelectedFund();
         }
         
-        // 防抖搜索
         searchTimeout = setTimeout(() => searchFunds(value), 300);
       });
 
-      // 搜索结果点击 - 事件委托
+      // 搜索结果点击
       elements.searchDropdown.addEventListener('click', (e) => {
         const item = e.target.closest('.search-item');
         if (item) {
@@ -1030,9 +1150,21 @@
       // 移除选中基金
       document.getElementById('removeSelectedFund').addEventListener('click', clearSelectedFund);
 
+      // 购买日期变更 - 自动获取净值
+      document.getElementById('fundDate').addEventListener('change', (e) => {
+        const date = e.target.value;
+        const code = document.getElementById('fundCode').value;
+        
+        clearTimeout(networthTimeout);
+        networthTimeout = setTimeout(() => {
+          if (code && date) {
+            fetchNetworth(code, date);
+          }
+        }, 500);
+      });
+
       // 份额预览更新
       document.getElementById('buyAmount').addEventListener('input', updateSharesPreview);
-      document.getElementById('buyNetWorth').addEventListener('input', updateSharesPreview);
 
       // 基金表单提交
       elements.fundForm.addEventListener('submit', async (e) => {
@@ -1041,7 +1173,7 @@
         const fund_name = selectedFund ? selectedFund.name : elements.searchInput.value.trim();
         const fund_code = document.getElementById('fundCode').value;
         const buy_amount = parseFloat(document.getElementById('buyAmount').value) || 0;
-        let buy_net_worth = parseFloat(document.getElementById('buyNetWorth').value);
+        let buy_net_worth = parseFloat(document.getElementById('buyNetWorth').value) || 1;
         
         if (!fund_name) {
           showToast('请选择基金');
@@ -1052,11 +1184,6 @@
           showToast('请输入买入金额');
           return;
         }
-        
-        if (!buy_net_worth && selectedFund && selectedFund.netWorth) {
-          buy_net_worth = selectedFund.netWorth;
-        }
-        if (!buy_net_worth) buy_net_worth = 1;
         
         const profit = parseFloat(document.getElementById('fundProfit').value) || 0;
         const purchase_date = document.getElementById('fundDate').value;
@@ -1080,16 +1207,7 @@
         }
       });
 
-      // 账户列表点击
-      elements.accountList.addEventListener('click', (e) => {
-        const item = e.target.closest('.account-item');
-        if (item) {
-          const id = item.dataset.accountId;
-          if (id) selectAccount(id);
-        }
-      });
-
-      // 基金列表点击（编辑/删除按钮）
+      // 基金列表点击
       elements.fundList.addEventListener('click', async (e) => {
         const editBtn = e.target.closest('[data-edit]');
         const deleteBtn = e.target.closest('[data-delete-id]');
@@ -1115,7 +1233,7 @@
         }
       });
 
-      // 点击模态框外部关闭
+      // 模态框关闭
       elements.accountModal.addEventListener('click', (e) => {
         if (e.target === elements.accountModal) closeAccountModal();
       });
@@ -1123,7 +1241,7 @@
         if (e.target === elements.fundModal) closeFundModal();
       });
 
-      // 点击页面其他区域关闭搜索下拉
+      // 页面其他区域关闭搜索下拉
       document.addEventListener('click', (e) => {
         if (!e.target.closest('.fund-search-wrapper') && !e.target.closest('.search-dropdown')) {
           elements.searchDropdown.classList.remove('show');
@@ -1132,8 +1250,6 @@
 
       // 初始加载
       loadData();
-      
-      // 定时刷新
       setInterval(loadData, 10 * 60 * 1000);
     });
   </script>

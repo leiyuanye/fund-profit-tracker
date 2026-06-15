@@ -75,7 +75,8 @@
 
     .account-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
     .account-name { font-size: 13px; font-weight: 500; }
-    .account-today { font-size: 12px; font-weight: bold; color: #ffd700; }
+    /* 当日收益：涨红跌绿 */
+    .account-today { font-size: 12px; font-weight: bold; color: #ff4d4f; }
     .account-today.negative { color: #00ff88; }
     .account-stats { font-size: 10px; opacity: 0.6; }
 
@@ -143,9 +144,24 @@
       border-radius: 12px;
     }
     .profit-left .section-label { font-size: 12px; opacity: 0.8; margin-bottom: 8px; }
-    .profit-left .section-amount { font-size: 32px; font-weight: bold; color: #ffd700; }
+    /* 当日收益：涨红跌绿 */
+    .profit-left .section-amount { font-size: 32px; font-weight: bold; color: #ff4d4f; }
     .profit-left .section-amount.negative { color: #00ff88; }
     .profit-left .section-rate { font-size: 14px; opacity: 0.8; margin-top: 4px; }
+    .section-date { font-size: 10px; opacity: 0.6; margin-top: 4px; color: rgba(255,255,255,0.5); }
+
+    .profit-all-today {
+      flex: 1;
+      text-align: center;
+      padding: 15px 20px;
+      background: rgba(0,0,0,0.25);
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .profit-all-today .section-label { font-size: 12px; opacity: 0.8; margin-bottom: 8px; }
+    .profit-all-today .section-amount { font-size: 28px; font-weight: bold; color: #ffd700; }
+    .profit-all-today .section-amount.negative { color: #00ff88; }
+    .profit-all-today .section-rate { font-size: 13px; opacity: 0.8; margin-top: 4px; }
 
     .profit-right {
       flex: 1.5;
@@ -218,7 +234,8 @@
     .fund-profit-rate { font-size: 11px; opacity: 0.7; }
 
     .fund-today { text-align: right; margin-right: 10px; min-width: 80px; }
-    .fund-today-amount { font-size: 14px; font-weight: bold; color: #ffd700; }
+    /* 当日收益：涨红跌绿 */
+    .fund-today-amount { font-size: 14px; font-weight: bold; color: #ff4d4f; }
     .fund-today-amount.negative { color: #00ff88; }
     .fund-today-label { font-size: 10px; opacity: 0.6; }
 
@@ -445,12 +462,20 @@
             <div class="section-label">💰 当日收益</div>
             <div class="section-amount" id="todayProfitAmount">+0.00</div>
             <div class="section-rate" id="todayProfitRate">+0.00%</div>
+            <div class="section-date" id="todayProfitDate"></div>
           </div>
 
           <div class="profit-right">
             <div class="section-label">📈 累计收益</div>
             <div class="section-amount" id="totalProfitAmount">+0.00</div>
             <div class="section-rate" id="totalProfitRate">+0.00%</div>
+          </div>
+
+          <!-- 所有账户当日总收益 -->
+          <div class="profit-all-today">
+            <div class="section-label">🌐 全部账户</div>
+            <div class="section-amount" id="allTodayProfitAmount">+0.00</div>
+            <div class="section-rate" id="allTodayProfitRate">+0.00%</div>
           </div>
         </div>
 
@@ -881,9 +906,14 @@
       return result;
     }
 
-    // ========== 选择账户 ==========
+    // ========== 选择账户（支持点击取消选择）==========
     function selectAccount(accountId) {
-      currentAccount = accountsData.find(a => a.id === accountId) || null;
+      // 如果点击的是已选中的账户，则取消选择
+      if (currentAccount && currentAccount.id === accountId) {
+        currentAccount = null;
+      } else {
+        currentAccount = accountsData.find(a => a.id === accountId) || null;
+      }
       renderAccounts();
       renderOverview();
       renderFunds();
@@ -903,12 +933,13 @@
 
       elements.accountList.innerHTML = accountsData.map(acc => {
         const isActive = currentAccount && currentAccount.id === acc.id;
+        // 当日收益：涨红跌绿
         const todayClass = acc.todayProfit >= 0 ? '' : 'negative';
         return `
           <div class="account-item ${isActive ? 'active' : ''}" data-account-id="${acc.id}">
             <div class="account-item-content">
               <div class="account-header">
-                <div class="account-name">${acc.name}</div>
+                <div class="account-name">${isActive ? '✓ ' : ''}${acc.name}</div>
                 <div class="account-today ${todayClass}">${fmtMoney(acc.todayProfit)}</div>
               </div>
               <div class="account-stats">
@@ -931,7 +962,8 @@
         todayProfit: 0, 
         totalProfitRate: 0, 
         todayProfitRate: 0, 
-        updateTime: '' 
+        updateTime: '',
+        todayDate: ''
       };
 
       const data = currentAccount || s;
@@ -939,13 +971,28 @@
       document.getElementById('currentAccountName').textContent = 
         currentAccount ? `📁 ${currentAccount.name}` : '📊 总收益概览';
       
+      // 当日收益（涨红跌绿）
       document.getElementById('todayProfitAmount').textContent = fmtMoney(data.todayProfit || 0);
       document.getElementById('todayProfitAmount').className = 'section-amount' + ((data.todayProfit || 0) < 0 ? ' negative' : '');
       document.getElementById('todayProfitRate').textContent = fmtRate(data.todayProfitRate || 0);
       
+      // 显示日期
+      const todayDate = s.todayDate || new Date().toLocaleDateString('zh-CN');
+      document.getElementById('todayProfitDate').textContent = todayDate;
+      
+      // 累计收益（涨红跌绿）
       document.getElementById('totalProfitAmount').textContent = fmtMoney(data.totalProfit || 0);
       document.getElementById('totalProfitAmount').className = 'section-amount' + ((data.totalProfit || 0) < 0 ? ' negative' : '');
       document.getElementById('totalProfitRate').textContent = fmtRate(data.profitRate || 0);
+      
+      // 所有账户当日总收益
+      const allTodayProfit = accountsData.reduce((sum, acc) => sum + (acc.todayProfit || 0), 0);
+      const allTodayInvestment = accountsData.reduce((sum, acc) => sum + (acc.totalInvestment || 0), 0);
+      const allTodayProfitRate = allTodayInvestment > 0 ? (allTodayProfit / allTodayInvestment) * 100 : 0;
+      
+      document.getElementById('allTodayProfitAmount').textContent = fmtMoney(allTodayProfit);
+      document.getElementById('allTodayProfitAmount').className = 'section-amount' + (allTodayProfit < 0 ? ' negative' : '');
+      document.getElementById('allTodayProfitRate').textContent = fmtRate(allTodayProfitRate);
       
       document.getElementById('totalInvestment').textContent = (data.totalInvestment || 0).toFixed(2);
       document.getElementById('totalCurrentValue').textContent = (data.totalCurrentValue || 0).toFixed(2);
@@ -978,7 +1025,9 @@
       }
 
       elements.fundList.innerHTML = holdings.map(h => {
+        // 累计收益：涨红跌绿
         const profitClass = (h.totalProfit || 0) >= 0 ? '' : 'negative';
+        // 当日收益：涨红跌绿
         const todayClass = (h.todayProfit || 0) >= 0 ? '' : 'negative';
         const confirmText = h.before_315 ? '当日确认' : 'T+1确认';
         const isConfirmed = h.isConfirmed !== false;
@@ -1250,7 +1299,29 @@
 
       // 初始加载
       loadData();
+      
+      // 每10分钟全量刷新
       setInterval(loadData, 10 * 60 * 1000);
+      
+      // 每30秒刷新当日收益（快速刷新）
+      setInterval(async () => {
+        try {
+          const res = await fetch(`${API}/overview`);
+          const result = await res.json();
+          if (result.success) {
+            overviewData = result.data;
+            accountsData = result.data.accounts || [];
+            if (currentAccount) {
+              currentAccount = accountsData.find(a => a.id === currentAccount.id) || null;
+            }
+            renderAccounts();
+            renderOverview();
+            renderFunds();
+          }
+        } catch (err) {
+          console.error('刷新当日收益失败:', err);
+        }
+      }, 30 * 1000);
     });
   </script>
 </body>

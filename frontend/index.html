@@ -159,8 +159,8 @@
       border: 1px solid rgba(255,255,255,0.1);
     }
     .profit-all-today .section-label { font-size: 12px; opacity: 0.8; margin-bottom: 8px; }
-    .profit-all-today .section-amount { font-size: 28px; font-weight: bold; color: #ffd700; }
-    .profit-all-today .section-amount.negative { color: #00ff88; }
+    .profit-all-today .section-amount { font-size: 28px; font-weight: bold; color: #ff4d4f; }  /* 正收益红色 */
+    .profit-all-today .section-amount.negative { color: #00ff88; }  /* 负收益绿色 */
     .profit-all-today .section-rate { font-size: 13px; opacity: 0.8; margin-top: 4px; }
 
     .profit-right {
@@ -175,10 +175,10 @@
     .profit-right .section-amount {
       font-size: 42px;
       font-weight: bold;
-      color: #ffd700;
+      color: #ff4d4f;  /* 正收益红色 */
       text-shadow: 0 2px 10px rgba(0,0,0,0.3);
     }
-    .profit-right .section-amount.negative { color: #00ff88; }
+    .profit-right .section-amount.negative { color: #00ff88; }  /* 负收益绿色 */
     .profit-right .section-rate { font-size: 15px; opacity: 0.9; margin-top: 4px; font-weight: 500; }
 
     .stats-grid {
@@ -490,7 +490,7 @@
           </div>
           <div class="stat-item">
             <div class="stat-value" id="totalHoldings">0</div>
-            <div class="stat-label">持仓数</div>
+            <div class="stat-label">持仓基金</div>
           </div>
         </div>
       </div>
@@ -980,24 +980,36 @@
       const todayDate = s.todayDate || new Date().toLocaleDateString('zh-CN');
       document.getElementById('todayProfitDate').textContent = todayDate;
       
-      // 累计收益（涨红跌绿）
+      // 累计收益（正红负绿）
+      const isProfitPositive = (data.totalProfit || 0) >= 0;
       document.getElementById('totalProfitAmount').textContent = fmtMoney(data.totalProfit || 0);
-      document.getElementById('totalProfitAmount').className = 'section-amount' + ((data.totalProfit || 0) < 0 ? ' negative' : '');
+      document.getElementById('totalProfitAmount').className = 'section-amount' + (isProfitPositive ? '' : ' negative');
       document.getElementById('totalProfitRate').textContent = fmtRate(data.profitRate || 0);
       
-      // 所有账户当日总收益
+      // 所有账户当日总收益（正红负绿）
       const allTodayProfit = accountsData.reduce((sum, acc) => sum + (acc.todayProfit || 0), 0);
       const allTodayInvestment = accountsData.reduce((sum, acc) => sum + (acc.totalInvestment || 0), 0);
       const allTodayProfitRate = allTodayInvestment > 0 ? (allTodayProfit / allTodayInvestment) * 100 : 0;
       
       document.getElementById('allTodayProfitAmount').textContent = fmtMoney(allTodayProfit);
-      document.getElementById('allTodayProfitAmount').className = 'section-amount' + (allTodayProfit < 0 ? ' negative' : '');
+      document.getElementById('allTodayProfitAmount').className = 'section-amount' + (allTodayProfit >= 0 ? '' : ' negative');
       document.getElementById('allTodayProfitRate').textContent = fmtRate(allTodayProfitRate);
+      
+      // 持仓基金去重统计
+      let uniqueFunds = new Set();
+      if (currentAccount && currentAccount.holdings) {
+        currentAccount.holdings.forEach(h => uniqueFunds.add(h.fund_code || h.fund_name));
+      } else {
+        accountsData.forEach(acc => {
+          if (acc.holdings) {
+            acc.holdings.forEach(h => uniqueFunds.add(h.fund_code || h.fund_name));
+          }
+        });
+      }
       
       document.getElementById('totalInvestment').textContent = (data.totalInvestment || 0).toFixed(2);
       document.getElementById('totalCurrentValue').textContent = (data.totalCurrentValue || 0).toFixed(2);
-      document.getElementById('totalHoldings').textContent = currentAccount ? 
-        (currentAccount.holdings ? currentAccount.holdings.length : 0) : (s.holdingsCount || 0);
+      document.getElementById('totalHoldings').textContent = uniqueFunds.size;
       
       document.getElementById('updateTime').textContent = s.updateTime || new Date().toLocaleTimeString();
     }

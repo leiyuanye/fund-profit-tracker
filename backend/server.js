@@ -205,36 +205,75 @@ async function fetchFundList() {
 }
 
 /**
- * 搜索基金 - 支持基金代码和名称搜索
+ * 基金搜索多数据源配置
+ * 可以配置多个搜索源，系统会自动合并去重
  */
-app.get('/api/fund/search', async (req, res) => {
-  try {
-    const { keyword } = req.query;
-    
-    if (!keyword || keyword.length < 1) {
-      return res.json({ success: true, data: [] });
-    }
-    
-    const funds = [];
-    const keywordLower = keyword.toLowerCase();
-    
-    // 1. 首先尝试按基金代码搜索
-    const codeMatch = keyword.match(/\d{6}/);
-    if (codeMatch) {
-      const price = await getFundPrice(codeMatch[0]);
-      if (price) {
-        funds.push({
-          code: price.code,
-          name: price.name,
-          type: '',
-          netWorth: price.netWorth,
-          dailyGrowth: price.estimatedGrowth
-        });
+const FUND_SEARCH_SOURCES = [
+  {
+    name: '天天基金实时',
+    enabled: true,
+    priority: 1, // 优先级，数字越小越优先
+    search: async (keyword) => {
+      const funds = [];
+      // 按基金代码搜索
+      const codeMatch = keyword.match(/\d{6}/);
+      if (codeMatch) {
+        const price = await getFundPrice(codeMatch[0]);
+        if (price) {
+          funds.push({
+            code: price.code,
+            name: price.name,
+            type: '',
+            netWorth: price.netWorth,
+            dailyGrowth: price.estimatedGrowth,
+            source: '天天基金实时'
+          });
+        }
       }
+      return funds;
     }
-    
-    // 2. 使用基金列表进行名称搜索
-    if (funds.length === 0 && keyword.length >= 1) {
+  },
+  {
+    name: '支付宝基金',
+    enabled: true,
+    priority: 2,
+    search: async (keyword) => {
+      const funds = [];
+      try {
+        // 支付宝基金搜索接口
+        const url = `https://fund.1234567.com.cn/fundsearch/search?keyword=${encodeURIComponent(keyword)}&type=0&pageIndex=1&pageSize=20`;
+        const response = await fetch(url, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+          }
+        });
+        const data = await response.json();
+        
+        if (data.data && Array.isArray(data.data)) {
+          for (const fund of data.data) {
+            funds.push({
+              code: fund.fundcode || fund.FundCode,
+              name: fund.fundname || fund.FundName,
+              type: fund.type || '',
+              netWorth: parseFloat(fund.networth || fund.NetWorth) || 0,
+              dailyGrowth: parseFloat(fund.growth || fund.Growth) || 0,
+              source: '支付宝'
+            });
+          }
+        }
+      } catch (error) {
+        console.error('支付宝搜索失败:', error.message);
+      }
+      return funds;
+    }
+  },
+  {
+    name: '天天基金列表',
+    enabled: true,
+    priority: 3,
+    search: async (keyword) => {
+      const funds = [];
+      const keywordLower = keyword.toLowerCase();
       const fundList = await fetchFundList();
       
       for (const fund of fundList) {
@@ -246,13 +285,56 @@ app.get('/api/fund/search', async (req, res) => {
             name: fund.name,
             type: '',
             netWorth: fund.netWorth,
-            dailyGrowth: fund.dailyGrowthRate
+            dailyGrowth: fund.dailyGrowthRate,
+            source: '天天基金列表'
           });
           
-          if (funds.length >= 20) break;
+          if (funds.length >= 15) break;
         }
       }
+      return funds;
     }
+  }
+];
+
+/**
+ * 搜索基金 - 多数据源合并去重
+ */
+app.get('/api/fund/search', async (req, res) => {
+  try {
+    const { keyword } = req.query;
+    
+    if (!keyword || keyword.length < 1) {
+      return res.json({ success: true, data: [] });
+    }
+    
+    // 并行搜索所有启用的数据源
+    const enabledSources = FUND_SEARCH_SOURCES.filter(s => s.enabled);
+    const searchPromises = enabledSources.map(source => 
+      source.search(keyword).catch(err => {
+        console.error(`${source.name} 搜索失败:`, err.message);
+        return [];
+      })
+    );
+    
+    const results = await Promise.all(searchPromises);
+    
+    // 合并所有结果并去重
+    const fundMap = new Map();
+    
+    results.flat().forEach(fund => {
+      if (!fund || !fund.code) return;
+      
+      const key = fund.code.toString().padStart(6, '0');
+      
+      // 如果已存在，保留优先级更高的（优先使用实时数据）
+      if (!fundMap.has(key)) {
+        fundMap.set(key, fund);
+      }
+    });
+    
+    // 转换为数组，最多返回20条
+    const funds = Array.from(fundMap.values()).slice(0, 20);
     
     res.json({ success: true, data: funds });
   } catch (error) {

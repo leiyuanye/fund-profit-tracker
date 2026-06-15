@@ -47,7 +47,6 @@
     .account-item {
       background: rgba(255, 255, 255, 0.05);
       border-radius: 10px;
-      padding: 0;
       margin-bottom: 8px;
       cursor: pointer;
       transition: all 0.3s;
@@ -74,7 +73,6 @@
       width: 100%;
       text-align: left;
     }
-    .account-item-content:focus { outline: none; }
 
     .account-header { display: flex; justify-content: space-between; margin-bottom: 4px; }
     .account-name { font-size: 13px; font-weight: 500; }
@@ -123,10 +121,6 @@
       font-size: 12px;
       opacity: 0.8;
       margin-bottom: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
     }
     .profit-left .section-amount {
       font-size: 32px;
@@ -134,11 +128,7 @@
       color: #ffd700;
     }
     .profit-left .section-amount.negative { color: #00ff88; }
-    .profit-left .section-rate {
-      font-size: 14px;
-      opacity: 0.8;
-      margin-top: 4px;
-    }
+    .profit-left .section-rate { font-size: 14px; opacity: 0.8; margin-top: 4px; }
 
     .profit-right {
       flex: 1.5;
@@ -148,15 +138,7 @@
       border-radius: 12px;
       border: 1px solid rgba(255,255,255,0.1);
     }
-    .profit-right .section-label {
-      font-size: 13px;
-      opacity: 0.8;
-      margin-bottom: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-    }
+    .profit-right .section-label { font-size: 13px; opacity: 0.8; margin-bottom: 8px; }
     .profit-right .section-amount {
       font-size: 42px;
       font-weight: bold;
@@ -164,12 +146,7 @@
       text-shadow: 0 2px 10px rgba(0,0,0,0.3);
     }
     .profit-right .section-amount.negative { color: #00ff88; }
-    .profit-right .section-rate {
-      font-size: 15px;
-      opacity: 0.9;
-      margin-top: 4px;
-      font-weight: 500;
-    }
+    .profit-right .section-rate { font-size: 15px; opacity: 0.9; margin-top: 4px; font-weight: 500; }
 
     .stats-grid {
       display: grid;
@@ -178,11 +155,7 @@
       background: rgba(255,255,255,0.1);
       border-top: 1px solid rgba(255,255,255,0.1);
     }
-    .stat-item { 
-      text-align: center; 
-      padding: 18px 10px;
-      background: rgba(0,0,0,0.1);
-    }
+    .stat-item { text-align: center; padding: 18px 10px; background: rgba(0,0,0,0.1); }
     .stat-value { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
     .stat-label { font-size: 11px; opacity: 0.7; }
 
@@ -264,7 +237,7 @@
     .modal {
       background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
       border-radius: 16px; padding: 25px;
-      width: 90%; max-width: 450px;
+      width: 90%; max-width: 480px;
       border: 1px solid rgba(255, 255, 255, 0.1);
     }
 
@@ -295,33 +268,47 @@
     }
     .shares-preview span { color: #667eea; font-weight: 600; }
 
-    /* 搜索框 */
-    .search-container { position: relative; }
-    .search-results {
+    /* 基金搜索下拉 - 独立定位 */
+    .fund-search-wrapper {
+      position: relative;
+    }
+    .search-dropdown {
       position: absolute;
       top: 100%;
-      left: 0; right: 0;
+      left: 0;
+      right: 0;
       background: #1a1a2e;
       border: 1px solid rgba(255,255,255,0.2);
-      border-radius: 8px;
-      max-height: 200px;
+      border-radius: 10px;
+      margin-top: 4px;
+      max-height: 250px;
       overflow-y: auto;
-      z-index: 10;
+      z-index: 100;
       display: none;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
     }
-    .search-results.active { display: block; }
+    .search-dropdown.show { display: block; }
+    .search-dropdown.loading { padding: 20px; text-align: center; }
     .search-item {
-      padding: 10px 12px;
+      padding: 12px 14px;
       cursor: pointer;
       border-bottom: 1px solid rgba(255,255,255,0.05);
-      font-size: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
+    .search-item:last-child { border-bottom: none; }
     .search-item:hover { background: rgba(102, 126, 234, 0.2); }
     .search-item.selected { background: rgba(102, 126, 234, 0.3); }
-    .search-item-code { opacity: 0.5; margin-left: 8px; }
-    .search-item-networth { opacity: 0.6; margin-left: 8px; font-size: 11px; }
-    .search-item-rate { float: right; opacity: 0.7; }
-    .search-empty { padding: 10px; text-align: center; opacity: 0.5; font-size: 12px; }
+    .search-item-left { flex: 1; }
+    .search-item-name { font-size: 13px; font-weight: 500; }
+    .search-item-code { font-size: 11px; opacity: 0.5; margin-top: 2px; }
+    .search-item-right { text-align: right; }
+    .search-item-networth { font-size: 11px; opacity: 0.6; }
+    .search-item-rate { font-size: 12px; font-weight: 600; margin-top: 2px; }
+    .search-item-rate.up { color: #ff4d4f; }
+    .search-item-rate.down { color: #00ff88; }
+    .search-empty { padding: 20px; text-align: center; opacity: 0.5; font-size: 13px; }
 
     .checkbox-group { display: flex; align-items: center; gap: 8px; }
     .checkbox-input { width: 16px; height: 16px; cursor: pointer; }
@@ -333,6 +320,7 @@
     .btn { flex: 1; padding: 11px; border-radius: 10px; border: none; font-size: 13px; font-weight: 600; cursor: pointer; }
     .btn-cancel { background: rgba(255, 255, 255, 0.1); color: white; }
     .btn-submit { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+    .btn:hover { opacity: 0.9; transform: translateY(-1px); }
 
     .toast {
       position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
@@ -352,6 +340,40 @@
       margin: 0 auto 10px;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* 选中的基金显示 */
+    .selected-fund {
+      background: rgba(102, 126, 234, 0.15);
+      border: 1px solid rgba(102, 126, 234, 0.3);
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-top: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .selected-fund-info { flex: 1; }
+    .selected-fund-name { font-size: 13px; font-weight: 500; }
+    .selected-fund-code { font-size: 11px; opacity: 0.5; margin-top: 2px; }
+    .selected-fund-networth { font-size: 11px; opacity: 0.7; margin-top: 4px; }
+    .selected-fund-change {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
+    .selected-fund-change.up { background: rgba(255,77,79,0.2); color: #ff4d4f; }
+    .selected-fund-change.down { background: rgba(0,255,136,0.2); color: #00ff88; }
+    .selected-fund-remove {
+      background: none;
+      border: none;
+      color: rgba(255,255,255,0.5);
+      cursor: pointer;
+      font-size: 18px;
+      margin-left: 10px;
+      padding: 4px;
+    }
+    .selected-fund-remove:hover { color: #ff4d4f; }
   </style>
 </head>
 <body>
@@ -360,7 +382,7 @@
     <aside class="sidebar">
       <div class="sidebar-header">
         <div class="sidebar-title">📁 账户列表</div>
-        <button class="add-account-btn" onclick="openAccountModal('add')">+ 新增账户</button>
+        <button class="add-account-btn" id="addAccountBtn">+ 新增账户</button>
       </div>
       <div class="account-list" id="accountList">
         <div class="loading"><div class="spinner"></div></div>
@@ -410,7 +432,7 @@
       <div class="fund-section">
         <div class="section-header">
           <div class="section-title">💼 持仓明细</div>
-          <button class="add-fund-btn" onclick="openFundModal()">+ 添加基金</button>
+          <button class="add-fund-btn" id="addFundBtn">+ 添加基金</button>
         </div>
         <div id="fundList">
           <div class="empty-state">
@@ -427,7 +449,7 @@
   <div class="modal-overlay" id="accountModal">
     <div class="modal">
       <div class="modal-title" id="accountModalTitle">新增账户</div>
-      <form onsubmit="handleAccountSubmit(event)">
+      <form id="accountForm">
         <input type="hidden" id="editAccountId">
         <div class="form-group">
           <label class="form-label">账户名称</label>
@@ -438,7 +460,7 @@
           <input type="text" class="form-input" id="accountDesc" placeholder="例如：养老计划">
         </div>
         <div class="form-btn-group">
-          <button type="button" class="btn btn-cancel" onclick="closeAccountModal()">取消</button>
+          <button type="button" class="btn btn-cancel" id="cancelAccountBtn">取消</button>
           <button type="submit" class="btn btn-submit" id="accountSubmitBtn">创建</button>
         </div>
       </form>
@@ -449,15 +471,28 @@
   <div class="modal-overlay" id="fundModal">
     <div class="modal">
       <div class="modal-title" id="fundModalTitle">添加基金</div>
-      <form onsubmit="handleFundSubmit(event)">
+      <form id="fundForm">
         <input type="hidden" id="editFundId">
+        <input type="hidden" id="fundCode">
 
         <!-- 基金搜索 -->
         <div class="form-group">
-          <label class="form-label">基金名称</label>
-          <div class="search-container">
-            <input type="text" class="form-input" id="fundName" placeholder="搜索基金名称..." autocomplete="off">
-            <div class="search-results" id="searchResults"></div>
+          <label class="form-label">基金名称/代码</label>
+          <div class="fund-search-wrapper">
+            <input type="text" class="form-input" id="fundSearchInput" placeholder="输入基金名称或6位代码搜索..." autocomplete="off">
+            <div class="search-dropdown" id="searchDropdown">
+              <div class="loading"><div class="spinner"></div></div>
+            </div>
+          </div>
+          <!-- 选中基金显示 -->
+          <div class="selected-fund" id="selectedFundDisplay" style="display:none;">
+            <div class="selected-fund-info">
+              <div class="selected-fund-name" id="selectedFundName">-</div>
+              <div class="selected-fund-code" id="selectedFundCode">-</div>
+              <div class="selected-fund-networth" id="selectedFundNetworth">净值: -</div>
+            </div>
+            <span class="selected-fund-change" id="selectedFundChange">-</span>
+            <button type="button" class="selected-fund-remove" id="removeSelectedFund">×</button>
           </div>
         </div>
 
@@ -465,11 +500,11 @@
         <div class="form-row">
           <div class="form-group">
             <label class="form-label">买入金额 (元)</label>
-            <input type="number" class="form-input" id="buyAmount" placeholder="例如：10000" step="0.01" oninput="updateSharesPreview()">
+            <input type="number" class="form-input" id="buyAmount" placeholder="例如：10000" step="0.01">
           </div>
           <div class="form-group">
             <label class="form-label">买入净值</label>
-            <input type="number" class="form-input" id="buyNetWorth" placeholder="例如：1.23" step="0.001" oninput="updateSharesPreview()">
+            <input type="number" class="form-input" id="buyNetWorth" placeholder="例如：1.23" step="0.001">
           </div>
         </div>
         <div class="shares-preview" id="sharesPreview">
@@ -496,7 +531,7 @@
         </div>
 
         <div class="form-btn-group">
-          <button type="button" class="btn btn-cancel" onclick="closeFundModal()">取消</button>
+          <button type="button" class="btn btn-cancel" id="cancelFundBtn">取消</button>
           <button type="submit" class="btn btn-submit" id="fundSubmitBtn">添加</button>
         </div>
       </form>
@@ -507,14 +542,16 @@
   <div class="toast" id="toast"></div>
 
   <script>
+    // ========== 全局变量 ==========
     const API = 'http://localhost:3801/api';
     let currentAccount = null;
     let accountsData = [];
     let overviewData = null;
+    let selectedFund = null; // 当前选中的基金
     let searchTimeout = null;
-    let selectedFundNetWorth = 0; // 选中基金的净值
+    let isSearching = false;
 
-    // Toast提示
+    // ========== 工具函数 ==========
     function showToast(msg) {
       const t = document.getElementById('toast');
       t.textContent = msg;
@@ -522,217 +559,249 @@
       setTimeout(() => t.classList.remove('show'), 2500);
     }
 
-    // 格式化金额
     function fmtMoney(n) { return (n >= 0 ? '+' : '') + n.toFixed(2); }
     function fmtRate(n) { return (n >= 0 ? '+' : '') + n.toFixed(2) + '%'; }
-    function fmtShares(n) { return n.toFixed(2); }
+
+    // ========== DOM 元素 ==========
+    const elements = {
+      accountList: document.getElementById('accountList'),
+      fundList: document.getElementById('fundList'),
+      accountModal: document.getElementById('accountModal'),
+      fundModal: document.getElementById('fundModal'),
+      accountForm: document.getElementById('accountForm'),
+      fundForm: document.getElementById('fundForm'),
+      searchDropdown: document.getElementById('searchDropdown'),
+      searchInput: document.getElementById('fundSearchInput'),
+      selectedFundDisplay: document.getElementById('selectedFundDisplay'),
+      sharesPreview: document.getElementById('sharesPreview'),
+    };
 
     // ========== 基金搜索 ==========
     async function searchFunds(keyword) {
-      const results = document.getElementById('searchResults');
+      const dropdown = elements.searchDropdown;
+      
       if (!keyword || keyword.length < 1) {
-        results.classList.remove('active');
+        dropdown.classList.remove('show');
         return;
       }
+
+      // 显示加载中
+      dropdown.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+      dropdown.classList.add('show');
+      isSearching = true;
 
       try {
         const res = await fetch(`${API}/fund/search?keyword=${encodeURIComponent(keyword)}`);
         const result = await res.json();
-
-        if (result.success && result.data.length > 0) {
-          results.innerHTML = result.data.map(f => `
-            <div class="search-item" data-code="${f.code}" data-name="${f.name}" data-networth="${f.netWorth}">
-              <span>${f.name}</span>
-              <span class="search-item-code">${f.code}</span>
-              <span class="search-item-networth">净值: ${f.netWorth.toFixed(4)}</span>
-              <span class="search-item-rate">${f.dailyGrowth > 0 ? '+' : ''}${f.dailyGrowth.toFixed(2)}%</span>
-            </div>
-          `).join('');
-        } else {
-          results.innerHTML = '<div class="search-empty">未找到相关基金</div>';
+        
+        if (!result.success || !result.data || result.data.length === 0) {
+          dropdown.innerHTML = '<div class="search-empty">未找到相关基金，请尝试其他关键词</div>';
+          return;
         }
-        results.classList.add('active');
-      } catch (e) {
-        console.error('搜索失败', e);
+
+        dropdown.innerHTML = result.data.map(f => {
+          const isUp = f.dailyGrowth >= 0;
+          return `
+            <div class="search-item" data-fund='${JSON.stringify(f).replace(/'/g, "&#39;")}'>
+              <div class="search-item-left">
+                <div class="search-item-name">${f.name}</div>
+                <div class="search-item-code">${f.code}</div>
+              </div>
+              <div class="search-item-right">
+                <div class="search-item-networth">净值: ${f.netWorth.toFixed(4)}</div>
+                <div class="search-item-rate ${isUp ? 'up' : 'down'}">${isUp ? '+' : ''}${f.dailyGrowth.toFixed(2)}%</div>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+      } catch (error) {
+        console.error('搜索失败:', error);
+        dropdown.innerHTML = '<div class="search-empty">搜索失败，请稍后重试</div>';
+      } finally {
+        isSearching = false;
       }
     }
 
-    function selectFund(code, name, netWorth) {
-      document.getElementById('fundCode').value = code;
-      document.getElementById('fundName').value = name;
-      document.getElementById('buyNetWorth').value = netWorth ? netWorth.toFixed(4) : '';
-      document.getElementById('searchResults').classList.remove('active');
-      selectedFundNetWorth = netWorth || 0;
+    function selectFund(fund) {
+      selectedFund = fund;
+      
+      // 填充表单
+      document.getElementById('fundCode').value = fund.code;
+      elements.searchInput.value = fund.name;
+      document.getElementById('buyNetWorth').value = fund.netWorth ? fund.netWorth.toFixed(4) : '1.0000';
+      
+      // 显示选中基金
+      elements.selectedFundDisplay.style.display = 'flex';
+      document.getElementById('selectedFundName').textContent = fund.name;
+      document.getElementById('selectedFundCode').textContent = fund.code;
+      document.getElementById('selectedFundNetworth').textContent = `净值: ${fund.netWorth ? fund.netWorth.toFixed(4) : '-'}`;
+      
+      const changeEl = document.getElementById('selectedFundChange');
+      const isUp = fund.dailyGrowth >= 0;
+      changeEl.textContent = `${isUp ? '+' : ''}${fund.dailyGrowth.toFixed(2)}%`;
+      changeEl.className = `selected-fund-change ${isUp ? 'up' : 'down'}`;
+      
+      // 隐藏下拉
+      elements.searchDropdown.classList.remove('show');
+      
+      // 更新份额预览
       updateSharesPreview();
       
-      // 高亮选中的搜索项
-      document.querySelectorAll('.search-item').forEach(item => {
-        item.classList.remove('selected');
-        if (item.dataset.code === code) {
-          item.classList.add('selected');
-        }
-      });
+      // 清空搜索输入框的显示名称
+      elements.searchInput.placeholder = '已选择: ' + fund.name;
     }
 
-    // 更新份额预览
+    function clearSelectedFund() {
+      selectedFund = null;
+      document.getElementById('fundCode').value = '';
+      elements.searchInput.value = '';
+      elements.searchInput.placeholder = '输入基金名称或6位代码搜索...';
+      elements.selectedFundDisplay.style.display = 'none';
+      updateSharesPreview();
+    }
+
     function updateSharesPreview() {
       const buyAmount = parseFloat(document.getElementById('buyAmount').value) || 0;
-      const buyNetWorth = parseFloat(document.getElementById('buyNetWorth').value) || selectedFundNetWorth || 1;
+      let buyNetWorth = parseFloat(document.getElementById('buyNetWorth').value);
+      
+      if (!buyNetWorth && selectedFund && selectedFund.netWorth) {
+        buyNetWorth = selectedFund.netWorth;
+      }
+      
+      if (!buyNetWorth) buyNetWorth = 1;
+      
       const shares = buyNetWorth > 0 ? buyAmount / buyNetWorth : 0;
-      document.getElementById('sharesPreview').innerHTML = 
-        `预计持有份额：<span>${shares.toFixed(2)}</span> 份`;
+      elements.sharesPreview.innerHTML = `预计持有份额：<span>${shares.toFixed(2)}</span> 份`;
     }
 
     // ========== 账户操作 ==========
     function openAccountModal(mode, account = null) {
-      document.getElementById('accountModal').classList.add('active');
-      if (mode === 'add') {
-        document.getElementById('accountModalTitle').textContent = '新增账户';
-        document.getElementById('accountSubmitBtn').textContent = '创建';
-        document.getElementById('editAccountId').value = '';
-      } else {
+      elements.accountModal.classList.add('active');
+      document.getElementById('editAccountId').value = '';
+      document.getElementById('accountName').value = '';
+      document.getElementById('accountDesc').value = '';
+      
+      if (mode === 'edit' && account) {
         document.getElementById('accountModalTitle').textContent = '编辑账户';
         document.getElementById('accountSubmitBtn').textContent = '保存';
         document.getElementById('editAccountId').value = account.id;
         document.getElementById('accountName').value = account.name;
         document.getElementById('accountDesc').value = account.description || '';
+      } else {
+        document.getElementById('accountModalTitle').textContent = '新增账户';
+        document.getElementById('accountSubmitBtn').textContent = '创建';
       }
     }
 
     function closeAccountModal() {
-      document.getElementById('accountModal').classList.remove('active');
-      document.getElementById('accountName').value = '';
-      document.getElementById('accountDesc').value = '';
+      elements.accountModal.classList.remove('active');
     }
 
-    async function handleAccountSubmit(e) {
-      e.preventDefault();
+    async function saveAccount(data) {
       const id = document.getElementById('editAccountId').value;
-      const name = document.getElementById('accountName').value.trim();
-      const description = document.getElementById('accountDesc').value.trim();
-
-      try {
-        if (id) {
-          const res = await fetch(`${API}/accounts/${id}`, {
-            method: 'PUT', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, description })
-          });
-          const result = await res.json();
-          if (result.success) showToast('✅ 账户已保存');
-        } else {
-          const res = await fetch(`${API}/accounts`, {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, description })
-          });
-          const result = await res.json();
-          if (result.success) showToast('✅ 账户已创建');
-        }
-        closeAccountModal();
-        loadData();
-      } catch (err) { showToast('❌ 操作失败'); }
+      const url = id ? `${API}/accounts/${id}` : `${API}/accounts`;
+      const method = id ? 'PUT' : 'POST';
+      
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      
+      const result = await res.json();
+      if (!result.success) throw new Error(result.message);
+      return result;
     }
 
     // ========== 基金操作 ==========
     function openFundModal(fund = null) {
-      if (!currentAccount) { showToast('请先选择账户'); return; }
-      document.getElementById('fundModal').classList.add('active');
+      elements.fundModal.classList.add('active');
+      
+      // 重置表单
+      document.getElementById('editFundId').value = '';
+      document.getElementById('fundCode').value = '';
+      elements.searchInput.value = '';
+      elements.searchInput.placeholder = '输入基金名称或6位代码搜索...';
+      elements.selectedFundDisplay.style.display = 'none';
+      document.getElementById('buyAmount').value = '';
+      document.getElementById('buyNetWorth').value = '';
+      document.getElementById('fundProfit').value = '';
       document.getElementById('fundDate').value = new Date().toISOString().split('T')[0];
       document.getElementById('before315').checked = true;
-      document.getElementById('searchResults').classList.remove('active');
-      selectedFundNetWorth = 0;
-
+      selectedFund = null;
+      updateSharesPreview();
+      
       if (fund) {
         document.getElementById('fundModalTitle').textContent = '编辑基金';
         document.getElementById('fundSubmitBtn').textContent = '保存';
         document.getElementById('editFundId').value = fund.id;
-        document.getElementById('fundCode').value = fund.fund_code || '';
-        document.getElementById('fundName').value = fund.fund_name;
+        
+        // 恢复基金数据
+        selectedFund = {
+          code: fund.fund_code || '',
+          name: fund.fund_name,
+          netWorth: fund.buy_net_worth || 1,
+          dailyGrowth: 0
+        };
+        
+        document.getElementById('fundCode').value = selectedFund.code;
+        elements.searchInput.value = selectedFund.name;
+        elements.searchInput.placeholder = '已选择: ' + selectedFund.name;
+        
+        elements.selectedFundDisplay.style.display = 'flex';
+        document.getElementById('selectedFundName').textContent = selectedFund.name;
+        document.getElementById('selectedFundCode').textContent = selectedFund.code || '-';
+        document.getElementById('selectedFundNetworth').textContent = `净值: ${selectedFund.netWorth.toFixed(4)}`;
+        document.getElementById('selectedFundChange').textContent = '-';
+        
         document.getElementById('buyAmount').value = fund.buy_amount || '';
         document.getElementById('buyNetWorth').value = fund.buy_net_worth ? fund.buy_net_worth.toFixed(4) : '';
         document.getElementById('fundProfit').value = fund.profit || '';
         document.getElementById('fundDate').value = fund.purchase_date || '';
         document.getElementById('before315').checked = fund.before_315 !== false;
-        selectedFundNetWorth = fund.buy_net_worth || 0;
+        
+        updateSharesPreview();
       } else {
         document.getElementById('fundModalTitle').textContent = '添加基金';
         document.getElementById('fundSubmitBtn').textContent = '添加';
-        document.getElementById('editFundId').value = '';
-        document.getElementById('fundCode').value = '';
-        document.getElementById('fundName').value = '';
-        document.getElementById('buyAmount').value = '';
-        document.getElementById('buyNetWorth').value = '';
-        document.getElementById('fundProfit').value = '';
       }
-      updateSharesPreview();
     }
 
     function closeFundModal() {
-      document.getElementById('fundModal').classList.remove('active');
+      elements.fundModal.classList.remove('active');
     }
 
-    async function handleFundSubmit(e) {
-      e.preventDefault();
+    async function saveHolding(data) {
       const id = document.getElementById('editFundId').value;
-      const fund_code = document.getElementById('fundCode').value;
-      const fund_name = document.getElementById('fundName').value.trim();
-      const buy_amount = parseFloat(document.getElementById('buyAmount').value) || 0;
-      const buy_net_worth = parseFloat(document.getElementById('buyNetWorth').value) || selectedFundNetWorth || 1;
-      const profit = parseFloat(document.getElementById('fundProfit').value) || 0;
-      const purchase_date = document.getElementById('fundDate').value;
-      const before_315 = document.getElementById('before315').checked;
-
-      if (!fund_name) {
-        showToast('请选择或输入基金名称');
-        return;
+      const url = id ? `${API}/holdings/${id}` : `${API}/holdings`;
+      const method = id ? 'PUT' : 'POST';
+      
+      if (!id) {
+        data.account_id = currentAccount.id;
       }
-
-      if (buy_amount <= 0) {
-        showToast('请输入买入金额');
-        return;
-      }
-
-      try {
-        const payload = { 
-          fund_code, 
-          fund_name, 
-          buy_amount, 
-          buy_net_worth, 
-          profit, 
-          purchase_date, 
-          before_315 
-        };
-        
-        if (id) {
-          const res = await fetch(`${API}/holdings/${id}`, {
-            method: 'PUT', 
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-          });
-          const result = await res.json();
-          if (result.success) showToast('✅ 已保存');
-        } else {
-          const res = await fetch(`${API}/holdings`, {
-            method: 'POST', 
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ account_id: currentAccount.id, ...payload })
-          });
-          const result = await res.json();
-          if (result.success) showToast('✅ 基金已添加');
-        }
-        closeFundModal();
-        loadData();
-      } catch (err) { showToast('❌ 操作失败'); }
+      
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      
+      const result = await res.json();
+      if (!result.success) throw new Error(result.message);
+      return result;
     }
 
-    async function deleteFund(id) {
+    async function deleteHolding(id) {
       if (!confirm('确定删除这只基金？')) return;
-      try {
-        const res = await fetch(`${API}/holdings/${id}`, { method: 'DELETE' });
-        const result = await res.json();
-        if (result.success) { showToast('🗑️ 已删除'); loadData(); }
-      } catch (err) { showToast('❌ 删除失败'); }
+      
+      const res = await fetch(`${API}/holdings/${id}`, { method: 'DELETE' });
+      const result = await res.json();
+      if (!result.success) throw new Error(result.message);
+      return result;
     }
 
+    // ========== 选择账户 ==========
     function selectAccount(accountId) {
       currentAccount = accountsData.find(a => a.id === accountId) || null;
       renderAccounts();
@@ -740,11 +809,10 @@
       renderFunds();
     }
 
-    // ========== 渲染 ==========
+    // ========== 渲染函数 ==========
     function renderAccounts() {
-      const list = document.getElementById('accountList');
       if (accountsData.length === 0) {
-        list.innerHTML = `
+        elements.accountList.innerHTML = `
           <div class="empty-state">
             <div class="empty-icon">📁</div>
             <div class="empty-text">暂无账户</div>
@@ -753,12 +821,12 @@
         return;
       }
 
-      list.innerHTML = accountsData.map(acc => {
+      elements.accountList.innerHTML = accountsData.map(acc => {
         const isActive = currentAccount && currentAccount.id === acc.id;
         const todayClass = acc.todayProfit >= 0 ? '' : 'negative';
         return `
           <div class="account-item ${isActive ? 'active' : ''}" data-account-id="${acc.id}">
-            <div class="account-item-content" tabindex="0" role="button" data-account-id="${acc.id}">
+            <div class="account-item-content">
               <div class="account-header">
                 <div class="account-name">${acc.name}</div>
                 <div class="account-today ${todayClass}">${fmtMoney(acc.todayProfit)}</div>
@@ -769,25 +837,6 @@
             </div>
           </div>`;
       }).join('');
-
-      list.onclick = function(e) {
-        const content = e.target.closest('.account-item-content');
-        if (content) {
-          const accountId = content.getAttribute('data-account-id');
-          if (accountId) selectAccount(accountId);
-        }
-      };
-
-      list.onkeydown = function(e) {
-        if (e.key === 'Enter' || e.key === ' ') {
-          const content = e.target.closest('.account-item-content');
-          if (content) {
-            e.preventDefault();
-            const accountId = content.getAttribute('data-account-id');
-            if (accountId) selectAccount(accountId);
-          }
-        }
-      };
     }
 
     function renderOverview() {
@@ -801,36 +850,30 @@
         updateTime: '' 
       };
 
-      if (currentAccount) {
-        document.getElementById('currentAccountName').textContent = `📁 ${currentAccount.name}`;
-        document.getElementById('todayProfitAmount').textContent = fmtMoney(currentAccount.todayProfit);
-        document.getElementById('todayProfitAmount').className = 'section-amount' + (currentAccount.todayProfit < 0 ? ' negative' : '');
-        document.getElementById('todayProfitRate').textContent = fmtRate(currentAccount.todayProfitRate || 0);
-        document.getElementById('totalProfitAmount').textContent = fmtMoney(currentAccount.totalProfit);
-        document.getElementById('totalProfitAmount').className = 'section-amount' + (currentAccount.totalProfit < 0 ? ' negative' : '');
-        document.getElementById('totalProfitRate').textContent = fmtRate(currentAccount.profitRate || 0);
-        document.getElementById('totalInvestment').textContent = (currentAccount.totalInvestment || 0).toFixed(2);
-        document.getElementById('totalCurrentValue').textContent = (currentAccount.totalCurrentValue || 0).toFixed(2);
-        document.getElementById('totalHoldings').textContent = currentAccount.holdings ? currentAccount.holdings.length : 0;
-      } else {
-        document.getElementById('currentAccountName').textContent = '📊 总收益概览';
-        document.getElementById('todayProfitAmount').textContent = fmtMoney(s.todayProfit);
-        document.getElementById('todayProfitAmount').className = 'section-amount' + (s.todayProfit < 0 ? ' negative' : '');
-        document.getElementById('todayProfitRate').textContent = fmtRate(s.todayProfitRate || 0);
-        document.getElementById('totalProfitAmount').textContent = fmtMoney(s.totalProfit);
-        document.getElementById('totalProfitAmount').className = 'section-amount' + (s.totalProfit < 0 ? ' negative' : '');
-        document.getElementById('totalProfitRate').textContent = fmtRate(s.totalProfitRate || 0);
-        document.getElementById('totalInvestment').textContent = s.totalInvestment.toFixed(2);
-        document.getElementById('totalCurrentValue').textContent = s.totalCurrentValue.toFixed(2);
-        document.getElementById('totalHoldings').textContent = s.holdingsCount || 0;
-      }
+      const data = currentAccount || s;
+
+      document.getElementById('currentAccountName').textContent = 
+        currentAccount ? `📁 ${currentAccount.name}` : '📊 总收益概览';
+      
+      document.getElementById('todayProfitAmount').textContent = fmtMoney(data.todayProfit || 0);
+      document.getElementById('todayProfitAmount').className = 'section-amount' + ((data.todayProfit || 0) < 0 ? ' negative' : '');
+      document.getElementById('todayProfitRate').textContent = fmtRate(data.todayProfitRate || 0);
+      
+      document.getElementById('totalProfitAmount').textContent = fmtMoney(data.totalProfit || 0);
+      document.getElementById('totalProfitAmount').className = 'section-amount' + ((data.totalProfit || 0) < 0 ? ' negative' : '');
+      document.getElementById('totalProfitRate').textContent = fmtRate(data.profitRate || 0);
+      
+      document.getElementById('totalInvestment').textContent = (data.totalInvestment || 0).toFixed(2);
+      document.getElementById('totalCurrentValue').textContent = (data.totalCurrentValue || 0).toFixed(2);
+      document.getElementById('totalHoldings').textContent = currentAccount ? 
+        (currentAccount.holdings ? currentAccount.holdings.length : 0) : (s.holdingsCount || 0);
+      
       document.getElementById('updateTime').textContent = s.updateTime || new Date().toLocaleTimeString();
     }
 
     function renderFunds() {
-      const list = document.getElementById('fundList');
       if (!currentAccount) {
-        list.innerHTML = `
+        elements.fundList.innerHTML = `
           <div class="empty-state">
             <div class="empty-icon">📈</div>
             <div class="empty-text">选择一个账户</div>
@@ -841,7 +884,7 @@
 
       const holdings = currentAccount.holdings || [];
       if (holdings.length === 0) {
-        list.innerHTML = `
+        elements.fundList.innerHTML = `
           <div class="empty-state">
             <div class="empty-icon">📋</div>
             <div class="empty-text">该账户暂无持仓</div>
@@ -850,9 +893,9 @@
         return;
       }
 
-      list.innerHTML = holdings.map(h => {
-        const profitClass = h.totalProfit >= 0 ? '' : 'negative';
-        const todayClass = h.todayProfit >= 0 ? '' : 'negative';
+      elements.fundList.innerHTML = holdings.map(h => {
+        const profitClass = (h.totalProfit || 0) >= 0 ? '' : 'negative';
+        const todayClass = (h.todayProfit || 0) >= 0 ? '' : 'negative';
         const confirmText = h.before_315 ? '当日确认' : 'T+1确认';
         const isConfirmed = h.isConfirmed !== false;
         
@@ -873,21 +916,22 @@
               </div>` : ''}
             </div>
             <div class="fund-today">
-              <div class="fund-today-amount ${todayClass}">${fmtMoney(h.todayProfit)}</div>
+              <div class="fund-today-amount ${todayClass}">${fmtMoney(h.todayProfit || 0)}</div>
               <div class="fund-today-label">当日收益</div>
             </div>
             <div class="fund-profit">
-              <div class="fund-profit-amount ${profitClass}">${fmtMoney(h.totalProfit)}</div>
+              <div class="fund-profit-amount ${profitClass}">${fmtMoney(h.totalProfit || 0)}</div>
               <div class="fund-profit-rate">${fmtRate(h.profitRate || 0)}</div>
             </div>
             <div class="fund-actions">
-              <button class="fund-action-btn" onclick="openFundModal(${JSON.stringify(h).replace(/"/g, '&quot;')})">✏️</button>
-              <button class="fund-action-btn delete" onclick="deleteFund('${h.id}')">🗑️</button>
+              <button class="fund-action-btn" data-edit='${JSON.stringify(h).replace(/'/g, "&#39;")}'>✏️</button>
+              <button class="fund-action-btn delete" data-delete-id="${h.id}">🗑️</button>
             </div>
           </div>`;
       }).join('');
     }
 
+    // ========== 数据加载 ==========
     async function loadData() {
       try {
         const res = await fetch(`${API}/overview`);
@@ -900,7 +944,8 @@
           }
         }
       } catch (err) {
-        console.error('加载失败', err);
+        console.error('加载失败:', err);
+        showToast('加载数据失败，请刷新重试');
         overviewData = null;
         accountsData = [];
         currentAccount = null;
@@ -910,39 +955,186 @@
       renderFunds();
     }
 
+    // ========== 事件绑定 ==========
     document.addEventListener('DOMContentLoaded', () => {
-      loadData();
-      setInterval(loadData, 10 * 60 * 1000);
-
-      const fundNameInput = document.getElementById('fundName');
-      fundNameInput.addEventListener('input', (e) => {
-        clearTimeout(searchTimeout);
-        searchTimeout = setTimeout(() => searchFunds(e.target.value), 300);
+      
+      // 添加账户按钮
+      document.getElementById('addAccountBtn').addEventListener('click', () => openAccountModal('add'));
+      document.getElementById('cancelAccountBtn').addEventListener('click', closeAccountModal);
+      
+      // 账户表单提交
+      elements.accountForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const name = document.getElementById('accountName').value.trim();
+        const description = document.getElementById('accountDesc').value.trim();
+        
+        if (!name) {
+          showToast('请输入账户名称');
+          return;
+        }
+        
+        try {
+          await saveAccount({ name, description });
+          showToast('✅ 保存成功');
+          closeAccountModal();
+          await loadData();
+        } catch (err) {
+          showToast('❌ 保存失败: ' + err.message);
+        }
       });
 
-      document.getElementById('searchResults').onclick = function(e) {
+      // 添加基金按钮
+      document.getElementById('addFundBtn').addEventListener('click', () => {
+        if (!currentAccount) {
+          showToast('请先选择账户');
+          return;
+        }
+        openFundModal();
+      });
+      document.getElementById('cancelFundBtn').addEventListener('click', closeFundModal);
+      
+      // 基金搜索输入
+      elements.searchInput.addEventListener('input', (e) => {
+        const value = e.target.value.trim();
+        clearTimeout(searchTimeout);
+        
+        // 如果清空了输入
+        if (!value) {
+          elements.searchDropdown.classList.remove('show');
+          clearSelectedFund();
+          return;
+        }
+        
+        // 移除已选基金状态
+        if (selectedFund && value !== selectedFund.name) {
+          clearSelectedFund();
+        }
+        
+        // 防抖搜索
+        searchTimeout = setTimeout(() => searchFunds(value), 300);
+      });
+
+      // 搜索结果点击 - 事件委托
+      elements.searchDropdown.addEventListener('click', (e) => {
         const item = e.target.closest('.search-item');
         if (item) {
-          const code = item.dataset.code;
-          const name = item.dataset.name;
-          const netWorth = parseFloat(item.dataset.networth) || 0;
-          selectFund(code, name, netWorth);
+          try {
+            const fund = JSON.parse(item.dataset.fund);
+            selectFund(fund);
+          } catch (err) {
+            console.error('解析基金数据失败:', err);
+          }
         }
-      };
+      });
 
+      // 移除选中基金
+      document.getElementById('removeSelectedFund').addEventListener('click', clearSelectedFund);
+
+      // 份额预览更新
+      document.getElementById('buyAmount').addEventListener('input', updateSharesPreview);
+      document.getElementById('buyNetWorth').addEventListener('input', updateSharesPreview);
+
+      // 基金表单提交
+      elements.fundForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const fund_name = selectedFund ? selectedFund.name : elements.searchInput.value.trim();
+        const fund_code = document.getElementById('fundCode').value;
+        const buy_amount = parseFloat(document.getElementById('buyAmount').value) || 0;
+        let buy_net_worth = parseFloat(document.getElementById('buyNetWorth').value);
+        
+        if (!fund_name) {
+          showToast('请选择基金');
+          return;
+        }
+        
+        if (buy_amount <= 0) {
+          showToast('请输入买入金额');
+          return;
+        }
+        
+        if (!buy_net_worth && selectedFund && selectedFund.netWorth) {
+          buy_net_worth = selectedFund.netWorth;
+        }
+        if (!buy_net_worth) buy_net_worth = 1;
+        
+        const profit = parseFloat(document.getElementById('fundProfit').value) || 0;
+        const purchase_date = document.getElementById('fundDate').value;
+        const before_315 = document.getElementById('before315').checked;
+        
+        try {
+          await saveHolding({
+            fund_code,
+            fund_name,
+            buy_amount,
+            buy_net_worth,
+            profit,
+            purchase_date,
+            before_315
+          });
+          showToast('✅ 保存成功');
+          closeFundModal();
+          await loadData();
+        } catch (err) {
+          showToast('❌ 保存失败: ' + err.message);
+        }
+      });
+
+      // 账户列表点击
+      elements.accountList.addEventListener('click', (e) => {
+        const item = e.target.closest('.account-item');
+        if (item) {
+          const id = item.dataset.accountId;
+          if (id) selectAccount(id);
+        }
+      });
+
+      // 基金列表点击（编辑/删除按钮）
+      elements.fundList.addEventListener('click', async (e) => {
+        const editBtn = e.target.closest('[data-edit]');
+        const deleteBtn = e.target.closest('[data-delete-id]');
+        
+        if (editBtn) {
+          try {
+            const fund = JSON.parse(editBtn.dataset.edit);
+            openFundModal(fund);
+          } catch (err) {
+            console.error('解析基金数据失败:', err);
+          }
+        }
+        
+        if (deleteBtn) {
+          const id = deleteBtn.dataset.deleteId;
+          try {
+            await deleteHolding(id);
+            showToast('🗑️ 已删除');
+            await loadData();
+          } catch (err) {
+            showToast('❌ 删除失败: ' + err.message);
+          }
+        }
+      });
+
+      // 点击模态框外部关闭
+      elements.accountModal.addEventListener('click', (e) => {
+        if (e.target === elements.accountModal) closeAccountModal();
+      });
+      elements.fundModal.addEventListener('click', (e) => {
+        if (e.target === elements.fundModal) closeFundModal();
+      });
+
+      // 点击页面其他区域关闭搜索下拉
       document.addEventListener('click', (e) => {
-        if (!e.target.closest('.search-container')) {
-          document.getElementById('searchResults').classList.remove('active');
+        if (!e.target.closest('.fund-search-wrapper') && !e.target.closest('.search-dropdown')) {
+          elements.searchDropdown.classList.remove('show');
         }
       });
-    });
 
-    ['accountModal', 'fundModal'].forEach(id => {
-      document.getElementById(id).addEventListener('click', e => {
-        if (e.target.classList.contains('modal-overlay')) {
-          document.getElementById(id).classList.remove('active');
-        }
-      });
+      // 初始加载
+      loadData();
+      
+      // 定时刷新
+      setInterval(loadData, 10 * 60 * 1000);
     });
   </script>
 </body>

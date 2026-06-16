@@ -5,435 +5,635 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>基金收益 - 账户分组管理</title>
   <style>
+    :root {
+      --bg: #0b1120;
+      --bg2: #151d2e;
+      --surface: rgba(21, 29, 46, 0.6);
+      --card: rgba(21, 29, 46, 0.7);
+      --ink: #e2e8f0;
+      --muted: #64748b;
+      --rule: rgba(100, 116, 139, 0.15);
+      --accent: #818cf8;
+      --accent2: #a78bfa;
+      --accent-glow: rgba(129, 140, 248, 0.2);
+      --profit-up: #f87171;
+      --profit-up-bg: rgba(248, 113, 113, 0.12);
+      --profit-down: #4ade80;
+      --profit-down-bg: rgba(74, 222, 128, 0.12);
+      --radius-sm: 8px;
+      --radius: 12px;
+      --radius-lg: 18px;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
+      --shadow: 0 4px 16px rgba(0,0,0,0.3);
+      --shadow-lg: 0 8px 32px rgba(0,0,0,0.4);
+      --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
     * { margin: 0; padding: 0; box-sizing: border-box; }
+
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+      background: var(--bg);
       min-height: 100vh;
-      color: #fff;
+      color: var(--ink);
+      -webkit-font-smoothing: antialiased;
     }
 
     .app-container { display: flex; min-height: 100vh; }
 
-    /* 左侧边栏 */
+    /* ========== 左侧边栏 ========== */
     .sidebar {
       width: 280px;
-      background: rgba(0, 0, 0, 0.2);
-      border-right: 1px solid rgba(255, 255, 255, 0.1);
+      background: var(--bg2);
+      border-right: 1px solid var(--rule);
       display: flex;
       flex-direction: column;
       height: 100vh;
       position: fixed;
       left: 0; top: 0;
+      z-index: 100;
+      box-shadow: var(--shadow);
     }
 
-    .sidebar-header { padding: 15px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
-    .sidebar-title { font-size: 15px; font-weight: 600; margin-bottom: 12px; }
+    .sidebar-header {
+      padding: 20px 16px 16px;
+      border-bottom: 1px solid var(--rule);
+      background: linear-gradient(180deg, rgba(129,140,248,0.05) 0%, transparent 100%);
+    }
+    .sidebar-title {
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 14px;
+      letter-spacing: 0.02em;
+      color: var(--ink);
+    }
 
     .add-account-btn {
-      width: 100%; padding: 10px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      border: none; border-radius: 8px;
-      color: white; font-size: 13px; cursor: pointer;
-      transition: transform 0.2s, box-shadow 0.2s;
+      width: 100%; padding: 10px 14px;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+      border: none; border-radius: var(--radius-sm);
+      color: white; font-size: 13px; font-weight: 600; cursor: pointer;
+      transition: all var(--transition);
+      letter-spacing: 0.01em;
     }
     .add-account-btn:hover {
       transform: translateY(-1px);
-      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+      box-shadow: 0 4px 20px var(--accent-glow);
     }
 
-    .account-list { flex: 1; overflow-y: auto; padding: 10px; }
+    .account-list { flex: 1; overflow-y: auto; padding: 12px 12px 80px; }
 
     .account-item {
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 10px;
+      background: var(--surface);
+      border-radius: var(--radius);
       margin-bottom: 8px;
       cursor: pointer;
-      transition: all 0.3s;
-      border: 2px solid transparent;
+      transition: all var(--transition);
+      border: 1px solid transparent;
       position: relative;
+      backdrop-filter: blur(10px);
     }
-    .account-item:hover { background: rgba(255, 255, 255, 0.08); }
-    .account-item.active { 
-      border-color: #667eea; 
-      background: rgba(102, 126, 234, 0.15); 
+    .account-item:hover {
+      background: rgba(30, 41, 59, 0.8);
+      border-color: rgba(129, 140, 248, 0.2);
+    }
+    .account-item.active {
+      border-color: var(--accent);
+      background: rgba(129, 140, 248, 0.12);
+      box-shadow: 0 0 20px rgba(129,140,248,0.08);
     }
     .account-item.active::before {
       content: '';
       position: absolute;
-      left: 0; top: 0; bottom: 0;
+      left: 0; top: 8px; bottom: 8px;
       width: 3px;
-      background: #667eea;
+      background: linear-gradient(180deg, var(--accent), var(--accent2));
+      border-radius: 0 3px 3px 0;
     }
 
     .account-item-content {
-      padding: 12px;
+      padding: 14px 16px;
       display: block;
       width: 100%;
       text-align: left;
     }
 
-    .account-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
-    .account-name { font-size: 13px; font-weight: 500; }
-    /* 当日收益：涨红跌绿 */
-    .account-today { font-size: 12px; font-weight: bold; color: #ff4d4f; }
-    .account-today.negative { color: #00ff88; }
-    .account-stats { font-size: 10px; opacity: 0.6; }
-
-    /* 账户编辑按钮 */
-    .account-actions {
-      display: flex;
-      gap: 4px;
-      margin-top: 8px;
-    }
-    .account-action-btn {
-      flex: 1;
-      padding: 6px;
-      border: none;
+    .account-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+    .account-name { font-size: 13px; font-weight: 600; color: var(--ink); }
+    .account-today {
+      font-size: 13px; font-weight: 700;
+      padding: 2px 8px;
       border-radius: 6px;
-      font-size: 11px;
-      cursor: pointer;
-      background: rgba(255, 255, 255, 0.1);
-      color: rgba(255, 255, 255, 0.7);
-      transition: all 0.2s;
+      color: var(--profit-up);
+      background: var(--profit-up-bg);
     }
-    .account-action-btn:hover {
-      background: rgba(255, 255, 255, 0.2);
-      color: white;
+    .account-today.negative {
+      color: var(--profit-down);
+      background: var(--profit-down-bg);
     }
-    .account-action-btn.delete:hover {
-      background: rgba(255, 71, 87, 0.3);
-      color: #ff4757;
+    .account-stats { font-size: 11px; color: var(--muted); line-height: 1.5; }
+
+    .account-actions { display: flex; gap: 6px; margin-top: 10px; }
+    .account-action-btn {
+      flex: 1; padding: 6px 8px;
+      border: none; border-radius: 6px;
+      font-size: 11px; font-weight: 500; cursor: pointer;
+      background: rgba(100, 116, 139, 0.12);
+      color: var(--muted);
+      transition: all var(--transition);
+    }
+    .account-action-btn:hover { background: rgba(100, 116, 139, 0.25); color: var(--ink); }
+    .account-action-btn.delete:hover { background: rgba(248, 113, 113, 0.2); color: var(--profit-up); }
+
+    /* ========== 主内容区 ========== */
+    .main-content {
+      flex: 1;
+      margin-left: 280px;
+      padding: 28px 32px;
+      max-width: 1200px;
     }
 
-    /* 主内容区 */
-    .main-content { flex: 1; margin-left: 280px; padding: 25px; }
-
-    /* 概览卡片 */
+    /* ========== 概览卡片 ========== */
     .overview-card {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      border-radius: 16px;
+      background: linear-gradient(135deg, #1e1b4b 0%, #312e81 40%, #3730a3 100%);
+      border-radius: var(--radius-lg);
       padding: 0;
-      margin-bottom: 20px;
-      box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+      margin-bottom: 24px;
+      box-shadow: 0 8px 40px rgba(99, 102, 241, 0.15);
       overflow: hidden;
+      border: 1px solid rgba(129, 140, 248, 0.15);
+      position: relative;
+    }
+    .overview-card::before {
+      content: '';
+      position: absolute;
+      top: -50%; right: -20%;
+      width: 400px; height: 400px;
+      background: radial-gradient(circle, rgba(167,139,250,0.1) 0%, transparent 70%);
+      pointer-events: none;
     }
 
-    .overview-header { 
-      display: flex; 
-      justify-content: space-between; 
+    .overview-header {
+      display: flex;
+      justify-content: space-between;
       align-items: center;
-      padding: 16px 25px;
-      border-bottom: 1px solid rgba(255,255,255,0.1);
-      background: rgba(0,0,0,0.1);
+      padding: 18px 28px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      position: relative;
+      z-index: 1;
     }
-    .overview-title { font-size: 15px; font-weight: 600; }
-    .overview-time { font-size: 11px; opacity: 0.7; }
+    .overview-title { font-size: 15px; font-weight: 700; letter-spacing: 0.02em; }
+    .overview-time { font-size: 12px; color: rgba(255,255,255,0.5); font-weight: 500; }
 
     .profit-main {
       display: flex;
-      padding: 20px 25px;
-      gap: 40px;
+      padding: 24px 28px;
+      gap: 20px;
+      position: relative;
+      z-index: 1;
     }
 
-    .profit-left {
+    .profit-left, .profit-right, .profit-all-today {
       flex: 1;
       text-align: center;
-      padding: 15px 20px;
-      background: rgba(0,0,0,0.15);
-      border-radius: 12px;
+      padding: 20px 16px;
+      border-radius: var(--radius);
+      background: rgba(0,0,0,0.18);
+      border: 1px solid rgba(255,255,255,0.06);
+      backdrop-filter: blur(10px);
+      transition: transform var(--transition);
     }
-    .profit-left .section-label { font-size: 12px; opacity: 0.8; margin-bottom: 8px; }
-    /* 当日收益：涨红跌绿 */
-    .profit-left .section-amount { font-size: 32px; font-weight: bold; color: #ff4d4f; }
-    .profit-left .section-amount.negative { color: #00ff88; }
-    .profit-left .section-rate { font-size: 14px; opacity: 0.8; margin-top: 4px; }
-    .section-date { font-size: 10px; opacity: 0.6; margin-top: 4px; color: rgba(255,255,255,0.5); }
+    .profit-left:hover, .profit-right:hover, .profit-all-today:hover {
+      transform: translateY(-2px);
+    }
 
-    .profit-all-today {
-      flex: 1;
-      text-align: center;
-      padding: 15px 20px;
-      background: rgba(0,0,0,0.25);
-      border-radius: 12px;
-      border: 1px solid rgba(255,255,255,0.1);
+    .profit-left .section-label,
+    .profit-right .section-label,
+    .profit-all-today .section-label {
+      font-size: 12px;
+      color: rgba(255,255,255,0.55);
+      margin-bottom: 10px;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
     }
-    .profit-all-today .section-label { font-size: 12px; opacity: 0.8; margin-bottom: 8px; }
-    .profit-all-today .section-amount { font-size: 28px; font-weight: bold; color: #ff4d4f; }  /* 正收益红色 */
-    .profit-all-today .section-amount.negative { color: #00ff88; }  /* 负收益绿色 */
-    .profit-all-today .section-rate { font-size: 13px; opacity: 0.8; margin-top: 4px; }
+    .profit-left .section-amount {
+      font-size: 30px;
+      font-weight: 800;
+      color: var(--profit-up);
+      line-height: 1.2;
+      text-shadow: 0 2px 12px rgba(248,113,113,0.2);
+    }
+    .profit-left .section-amount.negative {
+      color: var(--profit-down);
+      text-shadow: 0 2px 12px rgba(74,222,128,0.2);
+    }
+    .profit-left .section-rate { font-size: 14px; color: rgba(255,255,255,0.55); margin-top: 6px; }
+    .section-date { font-size: 11px; color: rgba(255,255,255,0.35); margin-top: 6px; }
 
-    .profit-right {
-      flex: 1.5;
-      text-align: center;
-      padding: 15px 20px;
-      background: rgba(0,0,0,0.2);
-      border-radius: 12px;
-      border: 1px solid rgba(255,255,255,0.1);
+    .profit-all-today .section-amount {
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--profit-up);
+      line-height: 1.2;
     }
-    .profit-right .section-label { font-size: 13px; opacity: 0.8; margin-bottom: 8px; }
+    .profit-all-today .section-amount.negative { color: var(--profit-down); }
+    .profit-all-today .section-rate { font-size: 13px; color: rgba(255,255,255,0.55); margin-top: 6px; }
+
     .profit-right .section-amount {
-      font-size: 42px;
-      font-weight: bold;
-      color: #ff4d4f;  /* 正收益红色 */
-      text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+      font-size: 40px;
+      font-weight: 800;
+      color: #fbbf24;
+      line-height: 1.2;
+      text-shadow: 0 2px 16px rgba(251,191,36,0.3);
     }
-    .profit-right .section-amount.negative { color: #00ff88; }  /* 负收益绿色 */
-    .profit-right .section-rate { font-size: 15px; opacity: 0.9; margin-top: 4px; font-weight: 500; }
+    .profit-right .section-amount.negative { color: var(--profit-down); text-shadow: 0 2px 16px rgba(74,222,128,0.2); }
+    .profit-right .section-rate { font-size: 15px; color: rgba(255,255,255,0.55); margin-top: 6px; font-weight: 600; }
 
     .stats-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 1px;
-      background: rgba(255,255,255,0.1);
-      border-top: 1px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.06);
+      border-top: 1px solid rgba(255,255,255,0.08);
+      position: relative;
+      z-index: 1;
     }
-    .stat-item { text-align: center; padding: 18px 10px; background: rgba(0,0,0,0.1); }
-    .stat-value { font-size: 18px; font-weight: 600; margin-bottom: 4px; }
-    .stat-label { font-size: 11px; opacity: 0.7; }
+    .stat-item {
+      text-align: center;
+      padding: 20px 12px;
+      background: rgba(0,0,0,0.12);
+      transition: background var(--transition);
+    }
+    .stat-item:hover { background: rgba(0,0,0,0.2); }
+    .stat-value {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 4px;
+      color: var(--ink);
+    }
+    .stat-label { font-size: 11px; color: rgba(255,255,255,0.45); font-weight: 500; letter-spacing: 0.03em; }
 
-    /* 基金列表 */
-    .fund-section { margin-top: 20px; }
-    .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-    .section-title { font-size: 15px; font-weight: 600; }
+    /* ========== 基金列表 ========== */
+    .fund-section { margin-top: 28px; }
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .section-title {
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      color: var(--ink);
+    }
 
     .add-fund-btn {
-      padding: 8px 14px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      border: none; border-radius: 8px;
-      color: white; font-size: 12px; cursor: pointer;
-      transition: transform 0.2s, box-shadow 0.2s;
+      padding: 9px 18px;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+      border: none; border-radius: var(--radius-sm);
+      color: white; font-size: 13px; font-weight: 600; cursor: pointer;
+      transition: all var(--transition);
+      letter-spacing: 0.01em;
     }
     .add-fund-btn:hover {
       transform: translateY(-1px);
-      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+      box-shadow: 0 4px 20px var(--accent-glow);
     }
 
     .fund-card {
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 12px;
-      padding: 14px;
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 16px 20px;
       margin-bottom: 10px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      transition: background 0.2s;
+      transition: all var(--transition);
+      border: 1px solid var(--rule);
+      backdrop-filter: blur(10px);
     }
-    .fund-card:hover { background: rgba(255, 255, 255, 0.08); }
-    .fund-card.unconfirmed { opacity: 0.6; border: 1px dashed rgba(255,255,255,0.2); }
+    .fund-card:hover {
+      background: rgba(30, 41, 59, 0.75);
+      border-color: rgba(129, 140, 248, 0.15);
+      box-shadow: var(--shadow-sm);
+    }
+    .fund-card.unconfirmed {
+      opacity: 0.55;
+      border-style: dashed;
+      border-color: rgba(100, 116, 139, 0.2);
+    }
 
-    .fund-info { flex: 1; }
-    .fund-name { font-size: 13px; font-weight: 500; margin-bottom: 4px; }
-    .fund-meta { font-size: 10px; opacity: 0.5; display: flex; gap: 10px; flex-wrap: wrap; }
-    .fund-details { font-size: 11px; opacity: 0.6; }
-    .fund-networth { font-size: 10px; opacity: 0.5; }
+    .fund-info { flex: 1; min-width: 0; }
+    .fund-name {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 5px;
+      color: var(--ink);
+    }
+    .fund-meta {
+      font-size: 11px;
+      color: var(--muted);
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 3px;
+    }
+    .fund-details { font-size: 11px; color: var(--muted); }
+    .fund-networth {
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 4px;
+      padding: 3px 8px;
+      background: rgba(100,116,139,0.1);
+      border-radius: 4px;
+      display: inline-block;
+    }
 
-    .fund-profit { text-align: right; margin-right: 10px; }
-    /* 累计收益：正红负绿 */
-    .fund-profit-amount { font-size: 15px; font-weight: bold; color: #ff4d4f; }
-    .fund-profit-amount.negative { color: #00ff88; }
-    .fund-profit-rate { font-size: 11px; opacity: 0.7; }
+    .fund-profit { text-align: right; margin-right: 12px; min-width: 90px; }
+    .fund-profit-amount {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--profit-up);
+      line-height: 1.3;
+    }
+    .fund-profit-amount.negative { color: var(--profit-down); }
+    .fund-profit-rate { font-size: 11px; color: var(--muted); }
 
-    .fund-today { text-align: right; margin-right: 10px; min-width: 80px; }
-    /* 当日收益：涨红跌绿 */
-    .fund-today-amount { font-size: 14px; font-weight: bold; color: #ff4d4f; }
-    .fund-today-amount.negative { color: #00ff88; }
-    .fund-today-label { font-size: 10px; opacity: 0.6; }
+    .fund-today { text-align: right; margin-right: 12px; min-width: 80px; }
+    .fund-today-amount {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--profit-up);
+      line-height: 1.3;
+    }
+    .fund-today-amount.negative { color: var(--profit-down); }
+    .fund-today-label { font-size: 10px; color: var(--muted); }
 
     .fund-actions { display: flex; gap: 6px; }
     .fund-action-btn {
-      padding: 5px 8px;
+      padding: 6px 10px;
       border-radius: 6px;
       border: none;
-      font-size: 11px;
+      font-size: 12px;
+      font-weight: 500;
       cursor: pointer;
-      background: rgba(255, 255, 255, 0.1);
-      color: white;
-      transition: background 0.2s;
+      background: rgba(100, 116, 139, 0.12);
+      color: var(--muted);
+      transition: all var(--transition);
     }
-    .fund-action-btn:hover { background: rgba(255, 255, 255, 0.2); }
-    .fund-action-btn.delete { background: rgba(255, 71, 87, 0.2); color: #ff4757; }
-    .fund-action-btn.delete:hover { background: rgba(255, 71, 87, 0.4); }
+    .fund-action-btn:hover { background: rgba(100, 116, 139, 0.25); color: var(--ink); }
+    .fund-action-btn.delete { background: rgba(248, 113, 113, 0.12); color: var(--profit-up); }
+    .fund-action-btn.delete:hover { background: rgba(248, 113, 113, 0.25); }
 
-    .empty-state { text-align: center; padding: 50px; opacity: 0.7; }
-    .empty-icon { font-size: 48px; margin-bottom: 15px; }
-    .empty-text { font-size: 14px; margin-bottom: 8px; }
-    .empty-hint { font-size: 12px; opacity: 0.5; }
+    .empty-state { text-align: center; padding: 60px 20px; }
+    .empty-icon { font-size: 52px; margin-bottom: 16px; opacity: 0.5; }
+    .empty-text { font-size: 15px; color: var(--ink); margin-bottom: 8px; font-weight: 500; }
+    .empty-hint { font-size: 13px; color: var(--muted); }
 
-    /* 模态框 */
+    /* ========== 模态框 ========== */
     .modal-overlay {
       position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0, 0, 0, 0.7);
+      background: rgba(0, 0, 0, 0.6);
       display: none; justify-content: center; align-items: center;
-      z-index: 1000; backdrop-filter: blur(5px);
+      z-index: 1000; backdrop-filter: blur(8px);
     }
     .modal-overlay.active { display: flex; }
 
     .modal {
-      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-      border-radius: 16px; padding: 25px;
+      background: var(--bg2);
+      border-radius: var(--radius-lg);
+      padding: 28px 28px 22px;
       width: 90%; max-width: 480px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      border: 1px solid var(--rule);
+      box-shadow: var(--shadow-lg), 0 0 60px rgba(129,140,248,0.05);
     }
 
-    .modal-title { font-size: 17px; font-weight: 600; margin-bottom: 20px; text-align: center; }
+    .modal-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 24px;
+      text-align: center;
+      color: var(--ink);
+      letter-spacing: 0.02em;
+    }
 
-    .form-group { margin-bottom: 14px; }
-    .form-label { display: block; font-size: 12px; margin-bottom: 6px; opacity: 0.8; }
+    .form-group { margin-bottom: 16px; }
+    .form-label {
+      display: block;
+      font-size: 12px;
+      margin-bottom: 6px;
+      color: var(--muted);
+      font-weight: 500;
+      letter-spacing: 0.02em;
+    }
     .form-input, .form-select {
-      width: 100%; padding: 11px;
-      border-radius: 10px;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      background: rgba(255, 255, 255, 0.05);
-      color: white; font-size: 13px;
+      width: 100%;
+      padding: 11px 14px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--rule);
+      background: rgba(15, 23, 42, 0.6);
+      color: var(--ink);
+      font-size: 13px;
+      transition: all var(--transition);
+      font-family: inherit;
     }
-    .form-input:focus, .form-select:focus { outline: none; border-color: #667eea; }
+    .form-input:focus, .form-select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+    .form-input::placeholder { color: var(--muted); }
 
-    .form-row { display: flex; gap: 10px; }
+    .form-row { display: flex; gap: 12px; }
     .form-row .form-group { flex: 1; }
 
     .shares-preview {
-      background: rgba(102, 126, 234, 0.15);
-      border-radius: 8px;
-      padding: 10px 12px;
+      background: rgba(129, 140, 248, 0.1);
+      border: 1px solid rgba(129, 140, 248, 0.15);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
       font-size: 12px;
-      color: rgba(255,255,255,0.8);
-      margin-top: 8px;
+      color: var(--muted);
+      margin-top: 10px;
+      font-weight: 500;
     }
-    .shares-preview span { color: #667eea; font-weight: 600; }
+    .shares-preview span { color: var(--accent); font-weight: 700; }
 
     /* 基金搜索下拉 */
     .fund-search-wrapper { position: relative; }
     .search-dropdown {
       position: absolute;
-      top: 100%;
-      left: 0;
-      right: 0;
-      background: #1a1a2e;
-      border: 1px solid rgba(255,255,255,0.2);
-      border-radius: 10px;
-      margin-top: 4px;
-      max-height: 250px;
+      top: calc(100% + 4px);
+      left: 0; right: 0;
+      background: var(--bg2);
+      border: 1px solid var(--rule);
+      border-radius: var(--radius);
+      max-height: 260px;
       overflow-y: auto;
-      z-index: 100;
+      z-index: 200;
       display: none;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      box-shadow: var(--shadow-lg);
+      backdrop-filter: blur(10px);
     }
     .search-dropdown.show { display: block; }
-    .search-dropdown.loading { padding: 20px; text-align: center; }
+    .search-dropdown.loading { padding: 24px; text-align: center; }
     .search-item {
-      padding: 12px 14px;
+      padding: 13px 16px;
       cursor: pointer;
-      border-bottom: 1px solid rgba(255,255,255,0.05);
+      border-bottom: 1px solid var(--rule);
       display: flex;
       justify-content: space-between;
       align-items: center;
+      transition: background var(--transition);
     }
     .search-item:last-child { border-bottom: none; }
-    .search-item:hover { background: rgba(102, 126, 234, 0.2); }
-    .search-item.selected { background: rgba(102, 126, 234, 0.3); }
-    .search-item-left { flex: 1; }
-    .search-item-name { font-size: 13px; font-weight: 500; }
-    .search-item-code { font-size: 11px; opacity: 0.5; margin-top: 2px; }
-    .search-item-right { text-align: right; }
-    .search-item-networth { font-size: 11px; opacity: 0.6; }
-    .search-item-rate { font-size: 12px; font-weight: 600; margin-top: 2px; }
-    .search-item-rate.up { color: #ff4d4f; }
-    .search-item-rate.down { color: #00ff88; }
-    .search-empty { padding: 20px; text-align: center; opacity: 0.5; font-size: 13px; }
+    .search-item:hover { background: rgba(129, 140, 248, 0.1); }
+    .search-item.selected { background: rgba(129, 140, 248, 0.15); }
+    .search-item-left { flex: 1; min-width: 0; }
+    .search-item-name { font-size: 13px; font-weight: 600; color: var(--ink); }
+    .search-item-code { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .search-item-right { text-align: right; margin-left: 12px; }
+    .search-item-networth { font-size: 11px; color: var(--muted); }
+    .search-item-rate { font-size: 12px; font-weight: 700; margin-top: 2px; }
+    .search-item-rate.up { color: var(--profit-up); }
+    .search-item-rate.down { color: var(--profit-down); }
+    .search-empty { padding: 24px; text-align: center; color: var(--muted); font-size: 13px; }
 
-    /* 选中基金显示 */
+    /* 选中基金 */
     .selected-fund {
-      background: rgba(102, 126, 234, 0.15);
-      border: 1px solid rgba(102, 126, 234, 0.3);
-      border-radius: 10px;
-      padding: 12px 14px;
-      margin-top: 8px;
+      background: rgba(129, 140, 248, 0.08);
+      border: 1px solid rgba(129, 140, 248, 0.25);
+      border-radius: var(--radius-sm);
+      padding: 13px 16px;
+      margin-top: 10px;
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
     .selected-fund-info { flex: 1; }
-    .selected-fund-name { font-size: 13px; font-weight: 500; }
-    .selected-fund-code { font-size: 11px; opacity: 0.5; margin-top: 2px; }
+    .selected-fund-name { font-size: 13px; font-weight: 600; color: var(--ink); }
+    .selected-fund-code { font-size: 11px; color: var(--muted); margin-top: 2px; }
     .selected-fund-change {
       font-size: 12px;
-      font-weight: 600;
-      padding: 4px 8px;
-      border-radius: 4px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 6px;
     }
-    .selected-fund-change.up { background: rgba(255,77,79,0.2); color: #ff4d4f; }
-    .selected-fund-change.down { background: rgba(0,255,136,0.2); color: #00ff88; }
+    .selected-fund-change.up { background: var(--profit-up-bg); color: var(--profit-up); }
+    .selected-fund-change.down { background: var(--profit-down-bg); color: var(--profit-down); }
     .selected-fund-remove {
-      background: none;
-      border: none;
-      color: rgba(255,255,255,0.5);
-      cursor: pointer;
-      font-size: 18px;
-      margin-left: 10px;
-      padding: 4px;
+      background: none; border: none;
+      color: var(--muted); cursor: pointer;
+      font-size: 18px; margin-left: 12px; padding: 4px 6px;
+      transition: color var(--transition);
     }
-    .selected-fund-remove:hover { color: #ff4d4f; }
+    .selected-fund-remove:hover { color: var(--profit-up); }
 
-    /* 净值获取状态 */
+    /* 净值状态 */
     .networth-status {
       font-size: 11px;
-      padding: 6px 10px;
+      padding: 8px 12px;
       border-radius: 6px;
-      margin-top: 6px;
+      margin-top: 8px;
       display: none;
+      font-weight: 500;
     }
     .networth-status.loading {
       display: block;
-      background: rgba(102, 126, 234, 0.15);
-      color: rgba(255,255,255,0.7);
+      background: rgba(129, 140, 248, 0.1);
+      color: var(--accent);
     }
     .networth-status.success {
       display: block;
-      background: rgba(0, 255, 136, 0.1);
-      color: #00ff88;
+      background: rgba(74, 222, 128, 0.1);
+      color: var(--profit-down);
     }
     .networth-status.warning {
       display: block;
-      background: rgba(255, 152, 0, 0.15);
-      color: #ff9800;
+      background: rgba(251, 191, 36, 0.1);
+      color: #fbbf24;
     }
     .networth-status.error {
       display: block;
-      background: rgba(255, 71, 87, 0.15);
-      color: #ff4757;
+      background: rgba(248, 113, 113, 0.1);
+      color: var(--profit-up);
     }
 
     .checkbox-group { display: flex; align-items: center; gap: 8px; }
-    .checkbox-input { width: 16px; height: 16px; cursor: pointer; }
-    .checkbox-label { font-size: 12px; opacity: 0.8; cursor: pointer; }
+    .checkbox-input { width: 16px; height: 16px; cursor: pointer; accent-color: var(--accent); }
+    .checkbox-label { font-size: 12px; color: var(--muted); cursor: pointer; user-select: none; }
 
-    .form-hint { font-size: 10px; opacity: 0.5; margin-top: 4px; }
+    .form-hint { font-size: 10px; color: var(--muted); margin-top: 4px; }
 
-    .form-btn-group { display: flex; gap: 10px; margin-top: 18px; }
-    .btn { flex: 1; padding: 11px; border-radius: 10px; border: none; font-size: 13px; font-weight: 600; cursor: pointer; }
-    .btn-cancel { background: rgba(255, 255, 255, 0.1); color: white; }
-    .btn-submit { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
-    .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+    .form-btn-group { display: flex; gap: 10px; margin-top: 22px; }
+    .btn {
+      flex: 1; padding: 12px;
+      border-radius: var(--radius-sm);
+      border: none;
+      font-size: 14px; font-weight: 600;
+      cursor: pointer;
+      transition: all var(--transition);
+      letter-spacing: 0.01em;
+    }
+    .btn-cancel {
+      background: rgba(100, 116, 139, 0.12);
+      color: var(--muted);
+    }
+    .btn-cancel:hover { background: rgba(100, 116, 139, 0.25); color: var(--ink); }
+    .btn-submit {
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+      color: white;
+    }
+    .btn-submit:hover { opacity: 0.92; transform: translateY(-1px); box-shadow: 0 4px 16px var(--accent-glow); }
 
     .toast {
-      position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-      background: #333; color: white; padding: 10px 20px;
-      border-radius: 8px; font-size: 13px; z-index: 2000;
-      opacity: 0; transition: opacity 0.3s;
+      position: fixed; top: 24px; left: 50%; transform: translateX(-50%);
+      background: var(--bg2);
+      color: var(--ink);
+      padding: 12px 24px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      z-index: 2000;
+      opacity: 0;
+      transition: opacity 0.3s;
+      border: 1px solid var(--rule);
+      box-shadow: var(--shadow-lg);
+      font-weight: 500;
     }
     .toast.show { opacity: 1; }
 
-    .loading { text-align: center; padding: 40px; opacity: 0.7; }
+    .loading { text-align: center; padding: 48px 20px; }
     .spinner {
       width: 28px; height: 28px;
-      border: 3px solid rgba(255, 255, 255, 0.1);
-      border-top-color: #667eea;
+      border: 3px solid var(--rule);
+      border-top-color: var(--accent);
       border-radius: 50%;
-      animation: spin 1s linear infinite;
+      animation: spin 0.8s linear infinite;
       margin: 0 auto 10px;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ========== 滚动条 ========== */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(100, 116, 139, 0.3);
+      border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(100, 116, 139, 0.5); }
+
+    /* ========== 响应式 ========== */
+    @media (max-width: 768px) {
+      .sidebar { width: 100%; height: auto; position: relative; }
+      .main-content { margin-left: 0; padding: 16px; }
+      .profit-main { flex-direction: column; gap: 12px; padding: 16px; }
+      .fund-card { flex-wrap: wrap; gap: 8px; }
+      .fund-actions { width: 100%; justify-content: flex-end; }
+      .overview-header { padding: 14px 16px; }
+      .stats-grid { grid-template-columns: repeat(3, 1fr); }
+    }
   </style>
 </head>
 <body>
